@@ -189,30 +189,30 @@ div.white-bg, p.white-bg {
 	ICONS
 */
 .icon-table {
-    background: url("../img/table.png") no-repeat scroll 0 0 transparent;
+    background: url("../tt_img/table.png") no-repeat scroll 0 0 transparent;
 }
 .icon-databases {
-    background: url("../img/databases.png") no-repeat scroll 0 0 transparent;
+    background: url("../tt_img/databases.png") no-repeat scroll 0 0 transparent;
 }
 .icon-database {
-    background: url("../img/database.png") no-repeat scroll 0 0 transparent;
+    background: url("../tt_img/database.png") no-repeat scroll 0 0 transparent;
 }
 .icon-schemas {
-    background: url("../img/schemas.png") no-repeat scroll 0 0 transparent;
+    background: url("../tt_img/schemas.png") no-repeat scroll 0 0 transparent;
 }
 
 .icon-schema {
-    background: url("../img/schema.png") no-repeat scroll 0 0 transparent;
+    background: url("../tt_img/schema.png") no-repeat scroll 0 0 transparent;
 }
 
 .icon-go {
-    background: url("../img/goto.png") no-repeat scroll 0 0 transparent;
+    background: url("../tt_img/goto.png") no-repeat scroll 0 0 transparent;
     vertical-align: bottom;
     margin-left: 5px;
 }
 
 .icon-back {
-    background: url("../img/goback.png") no-repeat scroll 0 0 transparent;	
+    background: url("../tt_img/goback.png") no-repeat scroll 0 0 transparent;	
 }
 
 .icon-schemas, .icon-databases, .icon-table, .icon-database, .icon-schema {
@@ -319,12 +319,12 @@ td.last-td {
 }
 
 td.sort-asc{
-    background: url("../img/sortasc.gif") no-repeat scroll right 6px transparent;
+    background: url("../tt_img/sortasc.gif") no-repeat scroll right 6px transparent;
     margin-right: 1px;
 }
 
 td.sort-desc{
-    background: url("../img/sortdesc.gif") no-repeat scroll right 5px transparent;
+    background: url("../tt_img/sortdesc.gif") no-repeat scroll right 5px transparent;
     margin-right: 1px;
 }
 /*

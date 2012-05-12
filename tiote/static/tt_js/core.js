@@ -55,7 +55,7 @@ function preloadImages() {
 	var pre;
 	for (var i=0; i<images.length; i++) {
 		pre = new Image();
-		pre.src = _staticUrl +"img/" + images[i];
+		pre.src = _staticUrl + "tt_img/" + images[i];
 	}	
 }
 
