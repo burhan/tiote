@@ -226,7 +226,7 @@ def generate_sidebar(request):
         sfx = "<ul>{0}</ul>".format( ''.join(_list) )
 
         ret_string = '<h6><a class="icon-back" href="#sctn=home&v=home">back home</a></h6>\
-<h6>quick nav:</h6><div class="sidebar-item"><img src="{3}/img/databases.png" />{0}</div>{1}{2}'.format( 
+<h6>quick nav:</h6><div class="sidebar-item"><img src="{3}/tt_img/databases.png" />{0}</div>{1}{2}'.format( 
             db_selection_form, placeholder, sfx, static_addr
         )
 
@@ -242,7 +242,7 @@ def generate_sidebar(request):
             schema_list = db.common_query(conn_params, 'schema_list', request.GET)
             schema_selection_form = select_input(schema_list,desc={'id':'schema_select'},initial=_dict['schm'])
             # s = '<div class="sidebar-item"><img class="icon-schemas" />' + schema_selection_form + "</div>"
-            s = '<div class="sidebar-item"><img src="{1}/img/schemas.png" />{0}</div>'.format(
+            s = '<div class="sidebar-item"><img src="{1}/tt_img/schemas.png" />{0}</div>'.format(
                 schema_selection_form, static_addr)
         
         # table selection ul
@@ -268,7 +268,7 @@ def generate_sidebar(request):
             '&schm=%s' % request.GET.get('schm') if request.GET.get('schm') else ''
             )
         ret_string = bck_lnk + '</h6>\
-<h6>quick nav:</h6><div class="sidebar-item"><img src="{4}/img/databases.png" /> {0}</div>{1}{2}{3}'.format( 
+<h6>quick nav:</h6><div class="sidebar-item"><img src="{4}/tt_img/databases.png" /> {0}</div>{1}{2}{3}'.format( 
             db_selection_form, s, # 0 & 1
             '<h6 class="placeholder">%ss:</h6>' % ABBREVS[request.GET.get('sctn')], # 2
             "<ul>{0}</ul>".format( ''.join(sfx_list) ), # 3
@@ -365,12 +365,12 @@ class HtmlTable():
                 l_props.append( 
                     '<a href="{0}={1}" class="go_link">{2}</a>'.format(
                         self.props['go_link_dest'],row[0],
-                        '<img src="{0}/img/goto.png" />'.format(static_addr)
+                        '<img src="{0}/tt_img/goto.png" />'.format(static_addr)
                     )
                 )
             if self.props.keys().count('display_row') > 0 and self.props['display_row'] == True:
                 l_props.append(
-                    '<a class="go_link display_row pointer"><img src="{0}/img/goto.png" /></a>'.format(static_addr)
+                    '<a class="go_link display_row pointer"><img src="{0}/tt_img/goto.png" /></a>'.format(static_addr)
                 )
         tida = '<td class="controls"{1}><div class="data-entry">{0}</div></td>'.format(
             "".join(l_props),

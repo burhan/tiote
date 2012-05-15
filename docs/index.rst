@@ -19,6 +19,7 @@ Table of Contents
    Customisation <customisation>
    Project Overview <overview>
    Frequestly Asked Questions <faq>
+   ChangeLog <changelog>
 
 
 Links

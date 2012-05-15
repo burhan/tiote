@@ -1,5 +1,6 @@
-<div class='row'>
-	<div class='span12'>
+<div class="row">
+	<div class="span14">
+	<div class="span8 pull-left">
 		<h5 class='heading'>Welcome to Tiote!</h5>
 		<p>
 			This applications helps you manage and administer databases in a django application.
@@ -29,8 +30,15 @@
 		</form> -->
 		
 	</div>
-
+	{% if version_update %}
+	<div id="version-info" class="pull-right span5" style="margin-right:30px;">
+		<h6>Update Available</h6>
+		<p class="alert-message warning block-message">
+		<span>{{version_str|safe}} -> {{new_version_str|safe}} </span>
+		<br /><span> release date: {{new_version_release_date}} </span>
+		<!-- <p>{{version_changelog|safe}}</p> -->
+		</p>
+	</div>
+	{% endif %}
 </div>
-<div id='undisplayed_result' class='hidden' style="display:none;"></div>
-<div id='sidebar_data' class='hidden'>{{sidebar|safe}}</div>
-
+</div>
