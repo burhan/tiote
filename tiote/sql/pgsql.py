@@ -31,8 +31,14 @@ WHERE schema_name NOT LIKE '%pg_toast%' AND schema_name NOT LIKE '%pg_temp%'",
     'user_schema_list':
         "SELECT schema_name, schema_owner FROM information_schema.schemata \
 WHERE schema_name NOT LIKE '%pg_toast%' AND schema_name NOT LIKE '%pg_temp%' \
-AND schema_name NOT IN ('pg_catalog', 'information_schema')" # manually filled, might need to be adjusted if new
+AND schema_name NOT IN ('pg_catalog', 'information_schema')", # manually filled, might need to be adjusted if new
                                                      # - system catalogs are discovered
+    
+    'db_rpr':
+        'SELECT datname as name, pg_encoding_to_char(encoding) as encoding, \
+datcollate, datctype \
+FROM pg_catalog.pg_database \
+WHERE name not like \'%template%\' ',
     
     }
     
@@ -134,12 +140,6 @@ AND connamespace = (SELECT oid from pg_namespace WHERE nspname=\'{schm}\') \
 '.format(**query_data)
         return (q0, )
     
-    elif query_type == 'db_rpr':
-        q0 = 'SELECT datname as name, pg_encoding_to_char(encoding) as encoding, \
-datcollate, datctype \
-FROM pg_catalog.pg_database \
-WHERE name not like \'%template%\' '
-        return (q0, )
     
     
     

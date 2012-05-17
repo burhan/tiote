@@ -25,7 +25,12 @@ def stored_query(query_type):
     'variables':
         '''SHOW SESSION VARIABLES WHERE `Variable_name`='version_compile_machine'
         OR `Variable_name`='version_compile_os' OR `variable_name`='version'
-        '''     
+        ''',
+
+    'db_rpr':
+        'SELECT schema_name as name, default_character_set_name, default_collation_name \
+FROM information_schema.schemata',
+
     }
     
     return queries_db[query_type]
@@ -133,8 +138,4 @@ ORDER BY ordinal_position ASC'.format(**query_data)
         q0 = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db}'".format(**query_data)
         return (q0, )
 
-    elif query_type == 'db_rpr':
-        q0 = 'SELECT schema_name as name, default_character_set_name, default_collation_name \
-FROM information_schema.schemata'
-        return (q0, )
 

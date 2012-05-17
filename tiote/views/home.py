@@ -5,15 +5,16 @@ from django.template import loader, RequestContext, Template
 from django.views.decorators.http import require_http_methods
 from django.forms.formsets import formset_factory
 
-from tiote import forms, utils, VERSION
+from tiote import forms, VERSION
+from tiote.utils import *
 
 
 def home(request):
-    conn_params = utils.fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request)
     # queries and initializations
-    # template_list = utils.db.common_query(request, 'template_list')
-    # user_list = utils.db.common_query(request, 'user_list');
-    # charset_list = utils.db.common_query(request, 'charset_list');
+    # template_list = qry.common_query(request, 'template_list')
+    # user_list = qry.common_query(request, 'user_list');
+    # charset_list = qry.common_query(request, 'charset_list');
     
     # DbForm = forms.get_dialect_form('DbForm', conn_params['dialect'])
     
@@ -21,13 +22,13 @@ def home(request):
     #     form = DbForm(templates=template_list, users=user_list,
     #         charsets=charset_list, data=request.POST)
     #     if form.is_valid():
-    #         return utils.db.rpr_query(conn_params, 'create_db', form.cleaned_data)
+    #         return qry.rpr_query(conn_params, 'create_db', form.cleaned_data)
     # else:
     #     form = DbForm(templates=template_list, users=user_list, charsets=charset_list)
     
     extra_vars={
         # 'form':form, 
-        'variables':utils.db.get_home_variables(request)
+        'variables':qry.get_home_variables(request)
     }
     try:
         # get version information
@@ -73,19 +74,27 @@ def home(request):
 
             break # done what we need; can now exit loop
 
-    return utils.fns.response_shortcut(request, extra_vars=extra_vars)
+    return fns.response_shortcut(request, extra_vars=extra_vars)
 
 def dbs(request):
+    '''
+    list and provides an tabular interface to execute actions on databases
+    '''
+    conn_params = fns.get_conn_params(request)
     if request.method == 'POST':
         pass
 
     # view things
-
+    db_rpr = qry.rpr_query(conn_params, 'db_rpr', fns.qd(request.GET))
+    raise Exception(db_rpr)
 
 
 def route(request):
     if request.GET.get('v') in ('home', 'hm'):
         return home(request)
+
+    elif request.GET.get('v') in ('databases', 'dbs'):
+        return dbs(request)
 
     # default action
     return home(request)

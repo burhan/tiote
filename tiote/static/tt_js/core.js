@@ -79,7 +79,7 @@ Page.prototype.clearPage = function(clr_sidebar) {
 Page.prototype.loadPage = function(clr_sidebar) {
 	clr_sidebar = clr_sidebar || false;
 	var obj = this.options.navObj, oldObj = this.options.oldNavObj;
-	this.setTitle();
+	this.updateTitle();
 	this.generateTopMenu(obj);
 	disable_unimplemented_links();
 	this.generateView(obj, oldObj); 
@@ -94,12 +94,17 @@ Page.prototype.loadPage = function(clr_sidebar) {
  *
  *		tiote / view [ / subview ] :  / database [ / schm  ]/ table [/ subv] [/ page ]
  */
-Page.prototype.setTitle = function(new_title){
+Page.prototype.updateTitle = function(new_title){
 	new_title = new_title || false;
 	if (! new_title) {
 		var title = 'tiote';
 		var r = location.hash.replace('#','').parseQueryString();
-		title += ' / ' + r['v'];
+		// if the key can be translated translate else leave as it is
+		var _in = _abbrev.keys.indexOf(r['v']);
+		if (_in != -1)
+			title += ' / ' + _abbrev.values[_in];
+		else
+			title += ' / ' + r['v'];
 		// append spilter to the title of the page
 		//- functions(more like navigation depth) : objects ( db or tbl or schm we are working on)
 		title += " :  ";
@@ -109,7 +114,7 @@ Page.prototype.setTitle = function(new_title){
 		if (Object.keys(r).contains('offset')) title += ' / page ' + (r['offset'] / 100 + 1);
 		if (Object.keys(r).contains('subv')) {
 			// basic assumption made here: all subvs are abbreviations
-			var _in = _abbrev.keys.indexOf(r['subv']);
+			_in = _abbrev.keys.indexOf(r['subv']);
 			title += ' / ' + _abbrev.values[_in];
 		}
 	} else {
