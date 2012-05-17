@@ -1,5 +1,6 @@
 
 def stored_query(query_type):
+    
     queries_db = {
 
     'variables':

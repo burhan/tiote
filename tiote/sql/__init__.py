@@ -5,6 +5,7 @@ import datetime
 
 import mysql, pgsql
 
+
 def stored_query(query_type, dialect):
     '''
     Runs queries that are store directly as text and needs no translations. 
@@ -14,10 +15,11 @@ def stored_query(query_type, dialect):
     if dialect == 'mysql': return mysql.stored_query(query_type)
     elif dialect == 'postgresql': return pgsql.stored_query(query_type)
     
-    
+   
 def generate_query(query_type, dialect='postgresql', query_data=None):
     '''
-    Generates queries of ``query_type`` with the given ``query_data``.
+    Generates queries of ``query_type`` with the given ``query_data``. Queries here need
+    some form(s) of translation.
 
     Queries common to all dialects are written out here while others are left to their
     own files.
@@ -69,7 +71,7 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
     
     if dialect == 'postgresql':
     	return pgsql.generate_query(query_type, query_data=query_data)
-    elif dialect == 'postgresql':
+    elif dialect == 'mysql':
     	return mysql.generate_query(query_type, query_data=query_data)
 
     	
@@ -118,6 +120,11 @@ def short_query(conn_params, queries):
     
     
 def model_login(conn_params):
+    '''
+    Utility function which is used to simulate logging a user in.
+    
+    It checks if the username/password/database combination if given is correct.
+    '''
     link = URL(conn_params['database_driver'], username = conn_params['username'],
         password= conn_params['password'], host = conn_params['host'])
     if conn_params['connection_database']:
@@ -140,4 +147,9 @@ def model_login(conn_params):
 
 
 def get_conn_link(conn_params):
+    '''
+    SQLAlchemy uses a special syntax for its database descriptors. This utility function
+    gets that syntax from the given ``conn_params``
+    '''
     return '{dialect}://{username}:{password}@{host}/{db}'.format(**conn_params)
+

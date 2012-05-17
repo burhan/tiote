@@ -23,7 +23,7 @@ def stored_query(query_type):
         "SELECT CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.CHARACTER_SETS",
     
     'variables':
-        '''SHOW SESSION VARIABLES WHERE `Variable_name`='version_compile_machine' 
+        '''SHOW SESSION VARIABLES WHERE `Variable_name`='version_compile_machine'
         OR `Variable_name`='version_compile_os' OR `variable_name`='version'
         '''     
     }
@@ -32,6 +32,7 @@ def stored_query(query_type):
 
 
 def generate_query(query_type, query_data=None):
+    
     if query_type == 'create_user':
         # create user statement
         queries = []
@@ -136,4 +137,4 @@ ORDER BY ordinal_position ASC'.format(**query_data)
         q0 = 'SELECT schema_name as name, default_character_set_name, default_collation_name \
 FROM information_schema.schemata'
         return (q0, )
-    
+
