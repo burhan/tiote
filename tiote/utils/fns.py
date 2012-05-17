@@ -12,6 +12,12 @@ ABBREVS = {
     'idxs': 'indexes',
     'cols': 'columns',
     'seq': 'sequence',
+    'q': 'query',
+    'ov': 'overview',
+    'struct': 'structure',
+    'hm': 'home',
+    'ins': 'insert',
+    'dbs': 'databases',
 }
 
 # returns page templates for each view
@@ -60,8 +66,12 @@ def make_choices(choices, begin_empty=False, begin_value='', append_label=''):
     return ret
 
 def site_proc(request):
+    # abbreviations is splitted into arrays so that they can support 
+    # - searching both by keys and values
     return {
         'ajaxKey': request.session.get('ajaxKey',''),
+        'abbrevs_keys': ABBREVS.keys(),
+        'abbrevs_values': ABBREVS.values()
     }
 
 def http_500(msg=''):
@@ -126,6 +136,7 @@ def qd(query_dict):
     returns an object instead of a list as the norms of QuerySets
     '''
     return dict((key, query_dict.get(key)) for key in query_dict)
+
 
 def table_options(opt_type, with_keys=True, select_actions=False):
     '''
@@ -194,12 +205,12 @@ def generate_sidebar(request):
     # if sctn is 'home' give list of database
     # if sctn is overview give list of schema if postgresql or leave as above
     # if sctn is not 'home' or 'oveview' give a list of all the objects described by sctn
-    if request.GET.get('sctn') == 'home' or \
+    if request.GET.get('sctn') == 'hm' or \
     (conn_params['dialect'] == 'mysql' and request.GET.get('sctn') == 'db'):
         li_list = []
         for db_row in db_list:
             sufx = "&schm=public" if conn_params['dialect'] == 'postgresql' else ''
-            a = "<a class='icon-database' href='#sctn=db&v=overview&db={0}{1}'>{0}</a>".format(db_row[0],sufx)
+            a = "<a class='icon-database' href='#sctn=db&v=ov&db={0}{1}'>{0}</a>".format(db_row[0],sufx)
             active_li = ' class="active"' if request.GET.get('db') == db_row[0] else '' # this would mark an item for hightlighting 
                                                                                         # occurs in the 'db' section of MySQL dialect
                                                                                         # and it selects the currently displayed db
@@ -214,7 +225,7 @@ def generate_sidebar(request):
         schema_list = db.common_query(conn_params, 'schema_list', request.GET)
         _list = []
         for schm_row in schema_list:
-            a = '<a class="icon-schema" href="#sctn=db&v=overview&db={0}&schm={1}">{1}</a>'.format(
+            a = '<a class="icon-schema" href="#sctn=db&v=ov&db={0}&schm={1}">{1}</a>'.format(
                     _dict['db'], schm_row[0]
                 )
             # decide selected schema link
@@ -225,7 +236,7 @@ def generate_sidebar(request):
         placeholder = '<h6 class="placeholder">%ss:</h6>' % ABBREVS['schm']
         sfx = "<ul>{0}</ul>".format( ''.join(_list) )
 
-        ret_string = '<h6><a class="icon-back" href="#sctn=home&v=home">back home</a></h6>\
+        ret_string = '<h6><a class="icon-back" href="#sctn=hm&v=hm">back home</a></h6>\
 <h6>quick nav:</h6><div class="sidebar-item"><img src="{3}/tt_img/databases.png" />{0}</div>{1}{2}'.format( 
             db_selection_form, placeholder, sfx, static_addr
         )
@@ -263,7 +274,7 @@ def generate_sidebar(request):
         # 3. a h6.placeholder element shouting 'object types:'
         # 4. a ul having li > a each saying the specific 'object type' and linking to its appropriate view
         # ret_string = '<h6>quick nav:</h6><div><a class="james pull-right" href="">overview</a></div><br />\
-        bck_lnk = '<h6><a class="icon-back" href="#sctn=db&v=overview&db={0}{1}">back to overview</a>'.format(
+        bck_lnk = '<h6><a class="icon-back" href="#sctn=db&v=ov&db={0}{1}">back to overview</a>'.format(
             request.GET.get('db'),
             '&schm=%s' % request.GET.get('schm') if request.GET.get('schm') else ''
             )

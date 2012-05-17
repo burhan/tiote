@@ -1,13 +1,4 @@
 var pg, nav; // global variables
-// catalog of all abbreviations in use
-var _abbrev = {
-	'sctn': 'section',
-	'tbl': 'table',
-	'v': 'view',
-	'schm': 'schema',
-	'idxs': 'indexes',
-	'cols': 'columns'
-};
 
 function navigationChangedListener(navObject, oldNavObject){
 	// redirect to the next page as gotten from the location hash
@@ -25,6 +16,13 @@ window.addEvent('domready', function() {
 	nav = new Navigation();	
 	nav.addEvent('navigationChanged', navigationChangedListener);
 	
+	// make the string representation of all the abbreviations in use a JSON object
+	// the value and the key are associated by their index so they should not be changed
+	_abbrev = new Object();
+	_abbrev['keys'] = JSON.decode(_abbrev_keys);
+	_abbrev['values'] = JSON.decode(_abbrev_values);
+	delete _abbrev_keys; delete _abbrev_values; // maybe it will reduce memory (so c++)
+	
 	// if the location string contains hash tags
 	if (location.hash) {
 		// begin page rendering
@@ -33,7 +31,7 @@ window.addEvent('domready', function() {
 	}
 	// there are no hashes set a default
 	else
-		nav.set({'sctn': 'home', 'v': 'home'});
+		nav.set({'sctn': 'hm', 'v': 'hm'});
 	// higlight the element (.navbar a) that corresponds to the currently displayed view
 
 });
@@ -109,7 +107,11 @@ Page.prototype.setTitle = function(new_title){
 			if (Object.keys(r).contains(or_item)) title += ' / ' + r[or_item];
 		});
 		if (Object.keys(r).contains('offset')) title += ' / page ' + (r['offset'] / 100 + 1);
-		if (Object.keys(r).contains('subv')) title += ' / ' + _abbrev[ r['subv'] ];
+		if (Object.keys(r).contains('subv')) {
+			// basic assumption made here: all subvs are abbreviations
+			var _in = _abbrev.keys.indexOf(r['subv']);
+			title += ' / ' + _abbrev.values[_in];
+		}
 	} else {
 		title = new_title;
 	}
@@ -119,19 +121,20 @@ Page.prototype.setTitle = function(new_title){
 
 Page.prototype.generateTopMenu = function(data){
 	var links = new Hash();
-	l = ['query', 'import', 'export', 'insert', 'structure', 'overview', 'browse', 'update', 'search', 'home'];
-	l.append(['login', 'help', 'faq', 'users',]);
+	// all the links that can be displayed in the top menu
+	var l = ['query', 'import', 'export', 'insert', 'structure', 'overview',
+		'browse', 'update', 'search', 'home', 'users', 'databases'];
+	
 	l.each(function(item){
 		links[item] = new Element('a', {'text': item});
 	});
 	
+	// describe the links and their order that would be displayed in the top menu
+	// - also theirs sections and possible keys needed to complete the url
 	var order = [];var prefix_str;var suffix;
-	if (data['sctn'] == 'begin') {
-		order = ['login', 'help', 'faq'];
-		prefix_str = '#sctn=begin';
-	} else if (data['sctn'] == 'home') {
-		order = ['home', ,'users','query', 'import', 'export'];
-		prefix_str = '#sctn=home';
+	if (data['sctn'] == 'hm') {
+		order = ['home', 'databases' ,'users','query', 'import', 'export'];
+		prefix_str = '#sctn=hm';
 	} else if (data['sctn'] == 'db') {
 		order = ['overview', 'query','import','export'];
 		prefix_str = '#sctn=db';
@@ -145,7 +148,16 @@ Page.prototype.generateTopMenu = function(data){
 	var aggregate_links = new Elements();
 	order.each(function(item, key){
 		var elmt = links[item];
-		elmt.href = prefix_str + '&v=' + elmt.text;
+		// set the href tags of all the links
+		// view placeholders need some processing
+		var _in = _abbrev.values.indexOf(elmt.text);
+		if ( _in != -1){
+			// any such view should have its href v placeholder to be shortened
+			elmt.href = prefix_str + '&v=' + _abbrev.keys[_in];
+		}
+		else
+			elmt.href = prefix_str + '&v=' + elmt.text;
+		
         if (data['sctn'] == 'db' || data['sctn'] == 'tbl'){
             elmt.href += suffix[0] + data['db'];
             if (data['schm'])

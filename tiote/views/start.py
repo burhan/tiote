@@ -72,11 +72,11 @@ def ajax(request):
         return utils.fns.http_500('not a complete ajax request!')
     
     # call corresponding function as request.GET.get('view', False)
-    if request.GET.get('v', False) == 'query':
+    if request.GET.get('v', False) in ('query', 'q'):
         return query(request)
     if request.GET.get('sctn', False) == 'begin':
         return begin(request, utils.fns.qd(request.GET).get('v', False))
-    if request.GET.get('sctn', False) == 'home':
+    if request.GET.get('sctn', False) == 'hm':
         return views.home.route(request)
     elif request.GET.get('sctn', False) == 'db':
         return views.db.route(request)
@@ -92,7 +92,7 @@ def login(request):
     
     # if the user is already logged in take him back to the home page
     if utils.fns.check_login(request):
-        return HttpResponseRedirect(redi + '#sctn=home&v=home')
+        return HttpResponseRedirect(redi + '#sctn=hm&v=hm')
     
     # dialects' info
     c['dialects'] = [

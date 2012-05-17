@@ -94,5 +94,5 @@ def tbl_overview(request):
     
 
 def route(request):
-    if request.GET['v'] == 'overview':
+    if request.GET['v'] in ('overview', 'ov'):
         return overview(request)

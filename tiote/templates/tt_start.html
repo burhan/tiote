@@ -28,7 +28,7 @@
 		<div class='topbar' id="topbar">
 			<div class='topbar-inner'>
 				<div class='container-fluid'>
-					<a class="brand" href="#sctn=home&v=home">Project Tiote!</a>
+					<a class="brand" href="#sctn=hm&amp;v=hm">Project Tiote!</a>
 					<ul class="nav">
 <!--						<li><a class="active" href="#section=home&amp;view=home">Home</a></li>
 						<li><a href="#section=home&amp;view=users">Users</a></li>
@@ -56,5 +56,7 @@
 	<script type="text/javascript" charset="utf-8">
 		var _ajaxKey = '{{ ajaxKey }}';
 		var _staticUrl = '{{STATIC_URL}}';
+		var _abbrev_keys = "{{abbrevs_keys|safe}}"
+		var _abbrev_values = "{{abbrevs_values|safe}}"
 	</script>
 </html>

@@ -77,7 +77,7 @@ def structure(request):
         d['table'] = indexes_table.to_element() if indexes_table.has_body() \
             else '<div class="undefined">[Table contains no indexes]</div>'
     # generate arranged href
-    dest_url = SortedDict(); _d = {'sctn':'tbl','v':'structure'}
+    dest_url = SortedDict(); _d = {'sctn':'tbl','v':'struct'}
     for k in _d: dest_url[k] = _d[k] # init this way to maintain order
     for k in ('db', 'schm','tbl',): 
         if request.GET.get(k): dest_url[k] = request.GET.get(k)
@@ -194,9 +194,9 @@ def route(request):
         return edit(request)
     elif request.GET.get('v') == 'browse':
         return browse(request)
-    elif request.GET.get('v') == 'structure':
+    elif request.GET.get('v') in ('structure', 'struct'):
         return structure(request)
-    elif request.GET.get('v') == 'insert':
+    elif request.GET.get('v') in ('insert', 'ins'):
         return insert(request)
     else:
         return utils.fns.http_500('malformed URL of section "table"')

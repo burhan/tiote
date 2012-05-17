@@ -131,7 +131,7 @@ function showDialog(title, msg, options){
 function highlightActiveMenu(){
 	var aas = $$('.nav')[0].getElements('a');
 	aas.each(function(item){
-		if (location.href.contains(item.hash)){
+		if (location.hash.contains(item.hash)){
 			item.getParent().addClass('active');
 		}
 	});
@@ -203,8 +203,10 @@ function tbl_pagination(total_count, limit, offset) {
 
 
 function disable_unimplemented_links(){
+	// the current menus that have been implemented
+	// this data structure is to be filled manually
 	var implemented = {
-		'home': ['home', 'query'],
+		'hm': ['home', 'query', 'databases'],
 		'db': ['overview', 'query'],
 		'tbl': ['browse', 'structure', 'insert', 'query']
 	}
