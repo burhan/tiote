@@ -38,7 +38,7 @@ AND schema_name NOT IN ('pg_catalog', 'information_schema')", # manually filled,
         'SELECT datname as name, pg_encoding_to_char(encoding) as encoding, \
 datcollate, datctype \
 FROM pg_catalog.pg_database \
-WHERE name not like \'%template%\' ',
+WHERE datname not like \'%template%\' ',
     
     }
     

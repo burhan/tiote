@@ -76,7 +76,6 @@ def tbl_overview(request):
     for k in d: dest_url[k] = d[k]
     for k in ('db', 'schm',): 
         if request.GET.get(k): dest_url[k] = request.GET.get(k) 
-    conn_params = fns.get_conn_params(request)
     props_keys = (('table', 'key'),)
     static_addr = fns.render_template(request, '{{STATIC_URL}}')
     tables_table = htm.HtmlTable(static_addr=static_addr,
@@ -85,7 +84,7 @@ def tbl_overview(request):
             'go_link_dest': '#'+urlencode(dest_url)+'&tbl',
             'keys': props_keys
         }, **tbl_data
-        )
+    )
     if not tables_table.has_body():
         return HttpResponse('<div class="undefined">[No table has been defined in this table]</div>')
     tables_table_html = tables_table.to_element()

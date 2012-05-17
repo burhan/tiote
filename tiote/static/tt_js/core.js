@@ -80,7 +80,7 @@ Page.prototype.loadPage = function(clr_sidebar) {
 	clr_sidebar = clr_sidebar || false;
 	var obj = this.options.navObj, oldObj = this.options.oldNavObj;
 	this.updateTitle();
-	this.generateTopMenu(obj);
+	this.updateTopMenu(obj);
 	disable_unimplemented_links();
 	this.generateView(obj, oldObj); 
 	this.generateSidebar(clr_sidebar);
@@ -124,7 +124,7 @@ Page.prototype.updateTitle = function(new_title){
 	this.updateOptions({'title': title});
 }
 
-Page.prototype.generateTopMenu = function(data){
+Page.prototype.updateTopMenu = function(data){
 	var links = new Hash();
 	// all the links that can be displayed in the top menu
 	var l = ['query', 'import', 'export', 'insert', 'structure', 'overview',
@@ -138,7 +138,7 @@ Page.prototype.generateTopMenu = function(data){
 	// - also theirs sections and possible keys needed to complete the url
 	var order = [];var prefix_str;var suffix;
 	if (data['sctn'] == 'hm') {
-		order = ['home', 'databases' ,'users','query', 'import', 'export'];
+		order = ['home', 'users', 'databases' ,'query', 'import', 'export'];
 		prefix_str = '#sctn=hm';
 	} else if (data['sctn'] == 'db') {
 		order = ['overview', 'query','import','export'];

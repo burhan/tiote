@@ -15,7 +15,8 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     '''
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
-        'drop_table', 'empty_table', 'delete_row', 'create_column', 'delete_column',)
+        'drop_table', 'empty_table', 'delete_row', 'create_column', 'delete_column',
+        'drop_db',)
     
     if query_type in no_return_queries:
         conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']
@@ -194,13 +195,14 @@ def common_query(conn_params, query_name, get_data={}):
             conn_params['db'] == get_data.get('db') if get_data.get('db') else conn_params['db']
             r = sql.full_query(conn_params,
                 sql.stored_query(query_name, conn_params['dialect']))
-            return r['rows']
+#            raise Exception(r)
+            return r
                 
     elif conn_params['dialect'] == 'mysql':
         if query_name in mysql_redundant_queries :
             # this kind of queries require no special attention
             return sql.full_query(conn_params,
-                sql.stored_query(query_name, conn_params['dialect']))['rows']
+                sql.stored_query(query_name, conn_params['dialect']))
 
 
 def get_row(conn_params, get_data={}, post_data={}):

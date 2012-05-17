@@ -81,13 +81,40 @@ def dbs(request):
     list and provides an tabular interface to execute actions on databases
     '''
     conn_params = fns.get_conn_params(request)
-    if request.method == 'POST':
-        pass
+    if request.method == 'POST' and request.GET.get('upd8'):
+        # format the where_stmt to a mapping of columns to values (a dict)
+        l = request.POST.get('where_stmt').strip().split(';')
+        conditions = fns.get_conditions(l)
+        
+        if request.GET.get('upd8') == 'drop': q = 'drop_db'
+        
+        query_data = {'conditions':conditions}
+        
+        h = qry.rpr_query(conn_params, q , query_data)
+        h.set_cookie('TT_UPDATE_SIDEBAR', 'ye') # update sidebar in case there have been a deletion
+        return h
 
     # view things
-    db_rpr = qry.rpr_query(conn_params, 'db_rpr', fns.qd(request.GET))
-    raise Exception(db_rpr)
-
+    #inits
+    tbl_data = qry.common_query(conn_params, 'db_rpr',)
+    
+    props_keys = (('name', 'key'),)
+    static_addr = fns.render_template(request, '{{STATIC_URL}}')
+    db_rpr_tbl = htm.HtmlTable(static_addr=static_addr,
+        props={'count':tbl_data['count'],'with_checkboxes': True,
+            'go_link': True, 'go_link_type': 'href', 
+            'go_link_dest': '#sctn=db&db',
+            'keys': props_keys
+        }, **tbl_data
+    )
+    if not db_rpr_tbl.has_body():
+        return HttpResponse('<div class="undefined">[No database has been created in this server]</div>')
+    db_rpr_tbl_html = db_rpr_tbl.to_element()
+    db_rpr_tbl_opts = htm.table_options('db', with_keys=True, 
+        select_actions=True)
+    
+    return HttpResponse(db_rpr_tbl_opts + db_rpr_tbl_html)
+    
 
 def route(request):
     if request.GET.get('v') in ('home', 'hm'):

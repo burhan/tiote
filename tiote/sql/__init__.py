@@ -69,6 +69,14 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
             queries.append(q0)
         return tuple(queries)
     
+    elif query_type == 'drop_db':
+        queries = []
+        for where in query_data['conditions']:
+            where['name'] = where['name'].replace("'", "")
+            queries.append( "DROP DATABASE {name}".format(**where) )
+        return tuple(queries)
+    
+    
     if dialect == 'postgresql':
     	return pgsql.generate_query(query_type, query_data=query_data)
     elif dialect == 'mysql':
