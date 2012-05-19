@@ -23,13 +23,23 @@ def stored_query(query_type):
         "SELECT CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.CHARACTER_SETS",
     
     'variables':
-        '''SHOW SESSION VARIABLES WHERE `Variable_name`='version_compile_machine'
-        OR `Variable_name`='version_compile_os' OR `variable_name`='version'
+        '''
+        SHOW SESSION VARIABLES 
+        WHERE 
+            `Variable_name`='version_compile_machine' OR 
+            `Variable_name`='version_compile_os' OR 
+            `variable_name`='version'
         ''',
 
     'db_rpr':
-        'SELECT schema_name as name, default_character_set_name, default_collation_name \
-FROM information_schema.schemata',
+        """
+        SELECT 
+            schema_name as name,
+            default_character_set_name AS 'character set',
+            default_collation_name AS 'collation'
+        FROM 
+            information_schema.schemata
+        """,
 
     }
     
@@ -38,6 +48,7 @@ FROM information_schema.schemata',
 
 def generate_query(query_type, query_data=None):
     
+    # would be a function when users view is reenabled
     if query_type == 'create_user':
         # create user statement
         queries = []
@@ -101,8 +112,17 @@ def generate_query(query_type, query_data=None):
         return tuple(queries)
     
     elif query_type == 'table_rpr':
-        q = "SELECT TABLE_NAME AS 'table', TABLE_ROWS AS 'rows', TABLE_TYPE AS 'type', ENGINE as 'engine' \
-        FROM `INFORMATION_SCHEMA`.`TABLES` WHERE TABLE_SCHEMA = '{db}'".format(**query_data)
+        q = """
+        SELECT 
+            TABLE_NAME AS 'table',
+            TABLE_ROWS AS 'rows',
+            TABLE_TYPE AS 'type',
+            ENGINE as 'engine'
+        FROM
+            information_schema.tables
+        WHERE 
+            TABLE_SCHEMA = '{db}'
+        """.format(**query_data)
         return (q,)
     
     elif query_type == 'indexes':
