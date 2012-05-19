@@ -98,12 +98,12 @@ def full_query(conn_params, query):
             row = list(row)
             for i in range(len(row)):
                 if row[i] == None:
-                    row[i] = ""
+                    row[i] = u""
                 elif type( row[i] ) == datetime.datetime:
-                    row[i] = row[i].__str__()
+                    row[i] = unicode(row[i])
             l.append( tuple(row) )
-        d =  {'columns': query_result.keys(),'count': query_result.rowcount, 
-            'rows': l}
+        d =  {u'columns': query_result.keys(),u'count': query_result.rowcount, 
+            u'rows': l}
         conn.close()
         return d
     except Exception as e:

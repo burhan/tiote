@@ -1,5 +1,4 @@
 from django.conf.urls.defaults import patterns, include, url
-import settings
 
 urlpatterns = patterns('',
     (r'^$', 'tiote.views.start.index'),

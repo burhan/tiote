@@ -90,7 +90,7 @@ def generate_sidebar(request):
         _dict = {'db': request.GET.get('db')}
         # get a dropdown of databases from db_list with its initial set to what is in request.GET
         db_selection_form = select_input(db_list, desc={'id':'db_select'}, initial= _dict['db'])
-        schema_list = qry.common_query(conn_params, 'schema_list', request.GET)
+        schema_list = qry.common_query(conn_params, 'schema_list', request.GET)['rows']
         _list = []
         for schm_row in schema_list:
             a = '<a class="icon-schema" href="#sctn=db&v=ov&db={0}&schm={1}">{1}</a>'.format(
@@ -118,7 +118,7 @@ def generate_sidebar(request):
         if conn_params['dialect'] == 'postgresql':
             _dict['schm'] = request.GET.get('schm')
             # append schema selection with default to public
-            schema_list = qry.common_query(conn_params, 'schema_list', request.GET)
+            schema_list = qry.common_query(conn_params, 'schema_list', request.GET)['rows']
             schema_selection_form = select_input(schema_list,desc={'id':'schema_select'},initial=_dict['schm'])
             # s = '<div class="sidebar-item"><img class="icon-schemas" />' + schema_selection_form + "</div>"
             s = '<div class="sidebar-item"><img src="{1}/tt_img/schemas.png" />{0}</div>'.format(
@@ -258,15 +258,16 @@ class HtmlTable():
         row_list.append(tida)
 
         for i in range(len(row)):
-            if len(str(row[i])) > 40 and hasattr(self, 'keys_column') and not self.keys_column.count(self.columns[i]):
-                if str(row[i]).count('\n') and str(row[i]).find('\n') < 40:
-                    column_data = str(row[i])[0:str(row[i]).find('\n')]
-                else: column_data = str(row[i])[0:40]
+            row_i = unicode(row[i])
+            if len(row_i) > 40 and hasattr(self, 'keys_column') and not self.keys_column.count(self.columns[i]):
+                if row_i.count('\n') and row_i.find('\n') < 40:
+                    column_data = row_i[ 0 : row_i.find('\n') ]
+                else: column_data = row_i[0:40]
                 column_data += '<span class="to-be-continued">...</span>'
             else:
-                column_data = str(row[i])
+                column_data = row_i
             column_data = column_data.replace(' ', '&nbsp;') # tds with spaces in them have its width set to its min-width
-            row_list.append('<td><div class="data-entry"><code>{0}</code></div></td>'.format(str(column_data)))
+            row_list.append(u'<td><div class="data-entry"><code>{0}</code></div></td>'.format(str(column_data)))
 
         # empty td
         row_list.append('<td class="last-td"></td>')
@@ -274,19 +275,19 @@ class HtmlTable():
         self.tbody_chldrn.append(row_list)
     
     def to_element(self):
-        thead = '<div class="tbl-header"><table><tbody><tr>{0}</tr></tbody></table></div>'.format(
-            ''.join(self.thead_chldrn)
+        thead = u'<div class="tbl-header"><table><tbody><tr>{0}</tr></tbody></table></div>'.format(
+            u''.join(self.thead_chldrn)
         )
 
-        tbody = '<div class="tbl-body"><table{0}{1}{2}><tbody>{3}</tbody></table></div>'.format(
-            ''.join(self.attribs_list), # {0}
-            ' data="' + ''.join(self.store_list) +'"' if bool(self.store_list) else '', #{1}
-            ' keys="' + ''.join(self.keys_list) + '"' if bool(self.keys_list) else '' , #{2}
-            ''.join([ ''.join(row) for row in self.tbody_chldrn])
+        tbody = u'<div class="tbl-body"><table{0}{1}{2}><tbody>{3}</tbody></table></div>'.format(
+            u''.join(self.attribs_list), # {0}
+            u' data="' + ''.join(self.store_list) + u'"' if bool(self.store_list) else u'', #{1}
+            u' keys="' + ''.join(self.keys_list) + u'"' if bool(self.keys_list) else u'' , #{2}
+            u''.join([ ''.join(row) for row in self.tbody_chldrn])
         )
         
-        return '<div class="jsifyTable">' + thead + tbody + '</div>'
+        return u'<div class="jsifyTable">' + thead + tbody + u'</div>'
 
-    def __str__(self):
+    def __unicode__(self):
         return self.to_element()
 

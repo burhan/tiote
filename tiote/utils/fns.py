@@ -176,6 +176,8 @@ def quote(_str):
     '''
     return a single quoted version of the passed in string _str
     '''
-    return "'%s'" % _str
-    
-# cyclic import
+    if type(_str) == str:
+        return "'%s'" % _str
+    elif type(_str) == unicode:
+        return u"'%s'" % _str
+

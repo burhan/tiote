@@ -207,13 +207,13 @@ def common_query(conn_params, query_name, get_data={}):
 
 def get_row(conn_params, get_data={}, post_data={}):
     r = rpr_query(conn_params, 'get_single_row', get_data, post_data)
-    html = ""
+    html = u""
     if type(r) == str: return r
     for ind in range(len(r['columns'])):
-        html += '<span class="column-entry">' + str(r['columns'][ind]) + '</span>'
-        html += '<br /><div class="data-entry"><code>' + str(r['rows'][0][ind]) + '</code></div>'
+        html += u'<span class="column-entry">' + unicode(r['columns'][ind]) + u'</span>'
+        html += u'<br /><div class="data-entry"><code>' + unicode(r['rows'][0][ind]) + u'</code></div>'
     # replace all newlines with <br /> because html doesn't render newlines (\n) directly
-    html = html.replace('\n', '<br />')
+    html = html.replace(u'\n', u'<br />')
     return html
 
 
@@ -229,15 +229,15 @@ def insert_row(conn_params, get_data={}, form_data={}):
         if k in ('csrfmiddlewaretoken', 'save_changes_to'): continue
         cols.append(k)
         if type(form_data[k]) == list:
-            value = ",".join(  form_data[k]  )
+            value = u",".join(  form_data[k]  )
             values.append( fns.quote(value) )
         else: 
             values.append(  fns.quote( unicode(form_data[k]) )  )
 
     # generate sql insert statement
-    q = "INSERT INTO {0}{tbl} ({1}) VALUES ({2})".format(
-        '{schm}.'.format(**get_data) if conn_params['dialect'] == 'postgresql' else '',
-        ",".join(cols), ",".join(values), **get_data
+    q = u"INSERT INTO {0}{tbl} ({1}) VALUES ({2})".format(
+        u'{schm}.'.format(**get_data) if conn_params['dialect'] == 'postgresql' else u'',
+        u",".join(cols), u",".join(values), **get_data
         )
     
     # run query and return results
@@ -261,10 +261,10 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
     # * make lists a concatenation of lists
     cols, values = [], []
     for k in form_data:
-        if k in ('csrfmiddlewaretoken', 'save_changes_to'): continue
+        if k in (u'csrfmiddlewaretoken', u'save_changes_to'): continue
         cols.append(k)
         if type(form_data[k]) == list:
-            value = ",".join(  form_data[k]  )
+            value = u",".join(  form_data[k]  )
             values.append( fns.quote(value) )
         else: 
             values.append(  fns.quote( unicode(form_data[k]) )  )
@@ -272,18 +272,18 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
     # generate SET sub statment
     _l_set = []
     for i in range(len(cols)):
-        short_stmt = "=".join([cols[i], values[i]])
+        short_stmt = u"=".join([cols[i], values[i]])
         _l_set.append(short_stmt)
     # generate WHERE sub statement
     _l_where = []
     for key in indexed_cols:
-        short_stmt = "=".join([ key, fns.quote(  unicode(form_data[key])  ) ])
+        short_stmt = u"=".join([ key, fns.quote(  unicode(form_data[key])  ) ])
         _l_where.append(short_stmt)
 
     # generate full query
-    q = "UPDATE {0}{tbl} SET {set_stmts} WHERE {where_stmts}".format(
-        '{schm}.'.format(**get_data) if conn_params['dialect'] == 'postgresql' else '',
-        set_stmts = ", ".join(_l_set), where_stmts = "AND ".join(_l_where), **get_data 
+    q = u"UPDATE {0}{tbl} SET {set_stmts} WHERE {where_stmts}".format(
+        u'{schm}.'.format(**get_data) if conn_params['dialect'] == 'postgresql' else u'',
+        set_stmts = u", ".join(_l_set), where_stmts = u"AND ".join(_l_where), **get_data 
     )
     # run query and return results
     ret = sql.short_query(conn_params, (q, ))
