@@ -260,7 +260,9 @@ class HtmlTable():
         for i in range(len(row)):
             row_i = unicode(row[i])
             if len(row_i) > 40 and hasattr(self, 'keys_column') and not self.keys_column.count(self.columns[i]):
+                # trims the content until its off lenght 40 and adds a continuation placeholder
                 if row_i.count('\n') and row_i.find('\n') < 40:
+                    # if the newline is before the index 40 
                     column_data = row_i[ 0 : row_i.find('\n') ]
                 else: column_data = row_i[0:40]
                 column_data += '<span class="to-be-continued">...</span>'

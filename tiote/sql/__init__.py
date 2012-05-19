@@ -88,7 +88,7 @@ def full_query(conn_params, query):
     executes and returns a query result
     '''
     eng = create_engine(get_conn_link(conn_params))
-    conn = eng.connect()
+    conn = None
     try:
         conn = eng.connect()
         query_result =  conn.execute(text(query))
@@ -116,15 +116,16 @@ def short_query(conn_params, queries):
     executes and returns the success state of the query
     """
     eng = create_engine( get_conn_link(conn_params) )
-    conn = ''
+    conn = None
     try:
         conn = eng.connect()
         for query in queries:
             query_result = conn.execute(text(query))
-        return {'status':'success', 'msg':''}
     except Exception as e:
         conn.close()
         return {'status':'fail', 'msg': str(e) }
+    else:
+        return {'status':'success', 'msg':''}
     
     
 def model_login(conn_params):

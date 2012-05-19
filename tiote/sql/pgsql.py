@@ -25,20 +25,40 @@ def stored_query(query_type):
         "SELECT schemaname, tablename FROM pg_catalog.pg_tables ORDER BY schemaname DESC",
     
     'full_schema_list':
-        "SELECT schema_name, schema_owner FROM information_schema.schemata \
-WHERE schema_name NOT LIKE '%pg_toast%' AND schema_name NOT LIKE '%pg_temp%'",
+        """
+        SELECT 
+            schema_name, schema_owner 
+        FROM 
+            information_schema.schemata
+        WHERE 
+            schema_name NOT LIKE '%pg_toast%' AND 
+            schema_name NOT LIKE '%pg_temp%'
+        """,
     
     'user_schema_list':
-        "SELECT schema_name, schema_owner FROM information_schema.schemata \
-WHERE schema_name NOT LIKE '%pg_toast%' AND schema_name NOT LIKE '%pg_temp%' \
-AND schema_name NOT IN ('pg_catalog', 'information_schema')", # manually filled, might need to be adjusted if new
-                                                     # - system catalogs are discovered
+        """
+        SELECT 
+            schema_name, schema_owner 
+        FROM 
+            information_schema.schemata
+        WHERE 
+            schema_name NOT LIKE '%pg_toast%' 
+            AND schema_name NOT LIKE '%pg_temp%'
+            AND schema_name NOT IN ('pg_catalog', 'information_schema'),
+        """,
+        # - system catalogs are discovered
     
     'db_rpr':
-        'SELECT datname as name, pg_encoding_to_char(encoding) as encoding, \
-datcollate, datctype \
-FROM pg_catalog.pg_database \
-WHERE datname not like \'%template%\' ',
+        """
+        SELECT 
+            datname as name, 
+            pg_encoding_to_char(encoding) as encoding,
+            datcollate, datctype 
+        FROM 
+            pg_catalog.pg_database 
+        WHERE
+            datname not like \'%template%\' 
+        """,
     
     }
     
@@ -90,37 +110,82 @@ def generate_query(query_type, query_data=None):
         return ("".join(_l).format(**query_data), )
     
     elif query_type == 'table_rpr':
-        q = "SELECT t2.tablename AS table, t2.tableowner AS owner, t2.tablespace, t1.reltuples::integer AS \"estimated row count\" \
-FROM ( pg_catalog.pg_class as t1 INNER JOIN pg_catalog.pg_tables AS t2  ON t1.relname = t2.tablename) \
-WHERE t2.schemaname='{schm}' ORDER BY t2.tablename ASC".format(**query_data)
+        q = """
+        SELECT 
+            t2.tablename AS table,
+            t2.tableowner AS owner, 
+            t2.tablespace, 
+            t1.reltuples::integer AS "estimated row count"
+        FROM 
+            pg_catalog.pg_class as t1 
+            INNER JOIN pg_catalog.pg_tables AS t2
+            ON t1.relname = t2.tablename
+        WHERE 
+            t2.schemaname='{schm}' 
+        ORDER BY t2.tablename ASC
+        """.format(**query_data)
         return (q, )
     
     elif query_type == 'indexes':
-        q0 = "SELECT kcu.column_name, kcu.constraint_name, tc.constraint_type \
-FROM information_schema.key_column_usage AS kcu LEFT OUTER JOIN information_schema.table_constraints \
-AS tc on (kcu.constraint_name = tc.constraint_name) WHERE kcu.table_name='{tbl}' \
-AND kcu.table_schema='{schm}' AND kcu.table_catalog='{db}'".format(**query_data)
+        q0 = """
+        SELECT 
+            kcu.column_name, kcu.constraint_name, tc.constraint_type
+        FROM 
+            information_schema.key_column_usage AS kcu
+            LEFT OUTER JOIN information_schema.table_constraints AS tc 
+            ON (kcu.constraint_name = tc.constraint_name) 
+        WHERE 
+            kcu.table_name='{tbl}' AND
+            kcu.table_schema='{schm}' AND
+            kcu.table_catalog='{db}'
+        """.format(**query_data)
         return (q0,)
     
     elif query_type == 'primary_keys':
-        q0 = "SELECT kcu.column_name, kcu.constraint_name, tc.constraint_type \
-FROM information_schema.key_column_usage AS kcu LEFT OUTER JOIN information_schema.table_constraints \
-AS tc on (kcu.constraint_name = tc.constraint_name) WHERE kcu.table_name='{tbl}' \
-AND kcu.table_schema='{schm}' AND kcu.table_catalog='{db}' AND \
-(tc.constraint_type='PRIMARY KEY')".format(**query_data)
+        q0 = """
+        SELECT 
+            kcu.column_name, kcu.constraint_name, tc.constraint_type
+        FROM 
+            information_schema.key_column_usage AS kcu
+            LEFT OUTER JOIN information_schema.table_constraints AS tc
+            ON (kcu.constraint_name = tc.constraint_name) 
+        WHERE
+            kcu.table_name='{tbl}' AND 
+            kcu.table_schema='{schm}' AND 
+            kcu.table_catalog='{db}' AND 
+            (tc.constraint_type='PRIMARY KEY')
+        """.format(**query_data)
         return (q0, )
     
     elif query_type == 'table_structure':
-        q0 = "SELECT column_name as column, data_type as type, is_nullable as null, \
-column_default as default, character_maximum_length, numeric_precision, numeric_scale, \
-datetime_precision, interval_type, interval_precision FROM information_schema.columns \
-WHERE table_catalog='{db}' AND table_schema='{schm}' AND table_name='{tbl}' \
-ORDER BY ordinal_position ASC".format(**query_data)
+        q0 = """
+        SELECT 
+            column_name as column,
+            data_type as type,
+            is_nullable as null,
+            column_default as default, 
+            character_maximum_length, 
+            numeric_precision, numeric_scale, datetime_precision,
+            interval_type, interval_precision 
+        FROM 
+            information_schema.columns
+        WHERE 
+            table_catalog='{db}' AND 
+            table_schema='{schm}' AND 
+            table_name='{tbl}'
+        ORDER BY ordinal_position ASC
+        """.format(**query_data)
         return (q0, )
     
     elif query_type == 'table_sequences':
-        q0 = 'SELECT sequence_name, nextval(sequence_name::regclass), \
-setval(sequence_name::regclass, lastval() - 1, true) FROM information_schema.sequences'
+        q0 = """
+        SELECT 
+            sequence_name, 
+            nextval(sequence_name::regclass),
+            setval(sequence_name::regclass, lastval() - 1, true)
+        FROM
+            information_schema.sequences
+        """
         return (q0, )
     
     elif query_type == 'existing_tables':
@@ -133,11 +198,22 @@ ORDER BY tablename ASC".format(**query_data)
         return (q0, )
 
     elif query_type == 'foreign_key_relation':
-        q0 = 'SELECT conname, confrelid::regclass AS "referenced_table", \
-conkey AS array_local_columns, confkey AS array_foreign_columns \
-FROM pg_constraint WHERE contype = \'f\' AND conrelid::regclass = \'{tbl}\'::regclass \
-AND connamespace = (SELECT oid from pg_namespace WHERE nspname=\'{schm}\') \
-'.format(**query_data)
+        q0 = """
+        SELECT 
+            conname, 
+            confrelid::regclass AS "referenced_table",
+            conkey AS array_local_columns, 
+            confkey AS array_foreign_columns
+        FROM 
+            pg_constraint 
+        WHERE 
+            contype = 'f' 
+            AND conrelid::regclass = '{tbl}'::regclass
+            AND connamespace = (
+                SELECT oid 
+                FROM pg_namespace 
+                WHERE nspname='{schm}') 
+        """.format(**query_data)
         return (q0, )
     
     

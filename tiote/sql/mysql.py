@@ -106,36 +106,82 @@ def generate_query(query_type, query_data=None):
         return (q,)
     
     elif query_type == 'indexes':
-        q0 = "SELECT DISTINCT kcu.column_name, kcu.constraint_name, tc.constraint_type \
-from information_schema.key_column_usage as kcu, information_schema.table_constraints as tc WHERE \
-kcu.constraint_name = tc.constraint_name AND kcu.table_schema='{db}' AND tc.table_schema='{db}' \
-AND kcu.table_name='{tbl}'".format(**query_data)
+        q0 = """
+        SELECT DISTINCT 
+            kcu.column_name, 
+            kcu.constraint_name, 
+            tc.constraint_type
+        FROM 
+            information_schema.key_column_usage as kcu,
+            information_schema.table_constraints as tc 
+        WHERE 
+            kcu.constraint_name = tc.constraint_name 
+            AND kcu.table_schema='{db}' 
+            AND tc.table_schema='{db}' 
+            AND kcu.table_name='{tbl}'
+        """.format(**query_data)
         return (q0, )
     
     elif query_type == 'primary_keys':
-        q0 = "SELECT DISTINCT kcu.column_name, kcu.constraint_name, tc.constraint_type \
-from information_schema.key_column_usage as kcu, information_schema.table_constraints as tc WHERE \
-kcu.constraint_name = tc.constraint_name AND kcu.table_schema='{db}' AND tc.table_schema='{db}' \
-AND kcu.table_name='{tbl}' AND tc.table_name='{tbl}' \
-AND (tc.constraint_type='PRIMARY KEY')".format(**query_data)
+        q0 = """
+        SELECT DISTINCT 
+            kcu.column_name, 
+            kcu.constraint_name, 
+            tc.constraint_type 
+        FROM
+            information_schema.key_column_usage as kcu,
+            information_schema.table_constraints as tc
+        WHERE
+            kcu.constraint_name = tc.constraint_name AND 
+            kcu.table_schema='{db}' AND 
+            tc.table_schema='{db}' AND
+            kcu.table_name='{tbl}' AND 
+            tc.table_name='{tbl}' AND
+            tc.constraint_type='PRIMARY KEY'
+        """.format(**query_data)
         return (q0, )
     
     elif query_type == 'table_structure':
-        q0 = 'SELECT column_name AS "column", column_type AS "type", is_nullable AS "null", \
-column_default AS "default", extra \
-FROM information_schema.columns WHERE table_schema="{db}" AND table_name="{tbl}" \
-ORDER BY ordinal_position ASC'.format(**query_data)
+        q0 ="""
+        SELECT 
+            column_name AS "column", 
+            column_type AS "type", 
+            is_nullable AS "null",
+            column_default AS "default",
+            extra 
+        FROM
+            information_schema.columns 
+        WHERE 
+            table_schema="{db}" AND
+            table_name="{tbl}"
+        ORDER BY ordinal_position ASC
+        """.format(**query_data)
         return (q0, )
 
     elif query_type == 'raw_table_structure':
-        q0 = 'SELECT column_name AS "column", data_type AS "type", is_nullable AS "null", \
-column_default AS "default", character_maximum_length, numeric_precision, numeric_scale, extra, column_type \
-FROM information_schema.columns WHERE table_schema="{db}" AND table_name="{tbl}" \
-ORDER BY ordinal_position ASC'.format(**query_data)
+        q0 = """
+        SELECT 
+            column_name AS "column", 
+            data_type AS "type", 
+            is_nullable AS "null", 
+            column_default AS "default", 
+            character_maximum_length, 
+            numeric_precision, numeric_scale, extra, column_type
+        FROM 
+            information_schema.columns 
+        WHERE 
+            table_schema="{db}" 
+            AND table_name="{tbl}"
+        ORDER BY ordinal_position ASC
+        """.format(**query_data)
         return (q0, )
     
     elif query_type == 'existing_tables':
-        q0 = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='{db}'".format(**query_data)
+        q0 = """
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema='{db}'
+        """.format(**query_data)
         return (q0, )
 
 
