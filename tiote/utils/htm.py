@@ -2,8 +2,9 @@ from django.http import HttpResponse, Http404
 from django.template import loader, RequestContext, Template
 
 import qry, fns
+from tiote import sa
 
-def table_options(opt_type, with_keys=True, select_actions=False):
+def table_options(opt_type, with_keys=True, ):
     '''
     Generates a textual represenation (not unicode) of div.table-options for jsified Tables.
     This html serves as a sort of toolbars (compulsory) to the operations on a jsified table.
@@ -19,20 +20,21 @@ def table_options(opt_type, with_keys=True, select_actions=False):
         l.append('<span>{0}</span>'.format("Columns:" if opt_type=='tbls' else "Select: "))
         for ctrl in ctrls:
             l.append('<a class="selector select_{0}">{1}</a>'.format(ctrl, ctrl.title()))
-        if select_actions == True:
-            l.append("<span>With Selected: </span>")
-            # action(ctrls) html
-            if opt_type == 'user' or opt_type == 'data': 
-                ctrls = ['edit', 'delete']
-            elif opt_type == 'tbl':
-                ctrls = ['empty', 'drop']
-            elif opt_type == 'db':
-                ctrls = ['drop',]
-            for ctrl in ctrls:
-                l.append('<a class="doer needy_doer action_{0}">{1}</a>'.format(ctrl, ctrl.title()))
-            # add a refresh link for opt_type 'data'
-            if opt_type == 'data':
-                l.append('<a class="doer action_refresh" style="margin-left:20px">Refresh</a>')
+        # actions to be carried out on selected rows
+        l.append("<span>With Selected: </span>")
+        # action(ctrls) html
+        if opt_type == 'user' or opt_type == 'data': 
+            ctrls = ['edit', 'delete']
+        elif opt_type == 'tbl':
+            ctrls = ['empty', 'drop']
+        elif opt_type == 'db':
+            ctrls = ['drop',]
+        # build html handles for ctrls
+        for ctrl in ctrls:
+            l.append('<a class="doer needy_doer action_{0}">{1}</a>'.format(ctrl, ctrl.title()))
+        # add a refresh link for opt_type 'data'
+        if opt_type == 'data':
+            l.append('<a class="doer action_refresh" style="margin-left:20px">Refresh</a>')
 
     l.append("</p></div>") # closing unopen tags
     return "".join(l)
@@ -215,9 +217,9 @@ class HtmlTable():
 
     def _build_store_list(self, store):
         _l = []
-        if store != {}:
-            for key in store.keys():
-                _l.append("{0}:{1};".format(str(key), str(store[key])  ))
+        if store == {}: return _l
+        for key in store.keys():
+            _l.append("{0}:{1};".format(str(key), str(store[key])  ))
         return _l
 
     def _build_keys_list(self, keys):
@@ -293,3 +295,13 @@ class HtmlTable():
     def __unicode__(self):
         return self.to_element()
 
+
+class SAHtmlTable(HtmlTable):
+    
+    def __init__(self, ds, order=None, **kwargs): #ds : data structure
+        d = sa.parse_sa_result(ds, order)
+        HtmlTable.__init__(self, columns=d['columns'], rows=d['rows'], count=len(ds), **kwargs)        
+        
+        
+        
+        

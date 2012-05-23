@@ -4,8 +4,9 @@ from django.http import HttpResponse
 from django.template import loader, Template
 from django.utils.datastructures import SortedDict
 from urllib import urlencode
-from tiote import forms
+from tiote import forms, sa
 from tiote.utils import *
+from tiote.views import _abs
 
 
 def browse(request):
@@ -14,27 +15,18 @@ def browse(request):
     if request.method == 'POST' and request.GET.get('upd8') == 'delete':
         return qry.rpr_query(conn_params, 'delete_row', 
             fns.qd(request.GET), fns.qd(request.POST))
-    # row(s) edit/updating request handling
-    elif request.method == 'POST' and request.GET.get('upd8') == 'edit':
-        return fns.http_500('feature not yet implemented!')
+    
     tbl_data = qry.rpr_query(conn_params, 'browse_table',
         fns.qd(request.GET), fns.qd(request.POST))
-    static_addr = fns.render_template(request, '{{STATIC_URL}}')
-    browse_table = htm.HtmlTable(
-        static_addr = static_addr,
-        props={'count':tbl_data['count'], 'keys': tbl_data['keys']['rows'],
-            'with_checkboxes': True, 'display_row': True,
-        }, 
-        store = {'total_count':tbl_data['total_count'], 'offset': tbl_data['offset'],
-            'limit': tbl_data['limit']
-        }, **tbl_data
-    )
-    if not browse_table.has_body():
-        return HttpResponse('<div class="undefined">[This table contains no entry]</div>')
-    browse_table_html = browse_table.to_element().replace('\n', '<br />') # html doesn't display newlines(\n)
-    table_options_html = htm.table_options('data', 
-        with_keys=bool(tbl_data['keys']['rows']), select_actions=True)
-    return HttpResponse(table_options_html + browse_table_html)
+    
+    c = _abs.TableView(tbl_data=tbl_data,
+        tbl_props = {'with_checkboxes': True, 'display_row': True,},
+        tbl_store = {'total_count':tbl_data['total_count'], 'offset': tbl_data['offset'],
+            'limit': tbl_data['limit'] },
+        show_tbl_optns = True,
+        tbl_optn_type='data',
+        )
+    return c.get(request)
 
 
 def structure(request):
@@ -61,11 +53,18 @@ def structure(request):
     _subnav = {'cols': fns.ABBREVS['cols'], 'idxs':fns.ABBREVS['idxs']}
     if subv == 'cols':
         d['title'] = _subnav[subv]
-        tbl_struct_data = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
-        columns_table = htm.HtmlTable(attribs = {'id': 'tbl_columns'},
-            props = {'count': tbl_struct_data['count'], 'with_checkboxes': True,},
-            static_addr = static_addr, **tbl_struct_data
-        )
+#        tbl_struct_data = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
+#        columns_table = htm.HtmlTable(attribs = {'id': 'tbl_columns'},
+#            props = {'count': tbl_struct_data['count'], 'with_checkboxes': True,},
+#            static_addr = static_addr, **tbl_struct_data
+#        )
+        eng = sa._get_or_set_engine(request)
+        ds = sa.tbl_cols_desc(eng, request.GET.get('tbl'), request.GET.get('schm'))
+        order = ['name', 'type', 'nullable', 'default']
+        columns_table = htm.SAHtmlTable(ds, order=order, 
+            props = {'count': len(ds), 'with_checkboxes': True, 'keys': (('name', 'key'), )},
+            static_addr = static_addr)
+        
         d['table'] = columns_table.to_element() if columns_table.has_body() \
             else '<div class="undefined">[Table contains no columns]</div>'
     elif subv == 'idxs':

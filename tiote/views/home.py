@@ -110,8 +110,7 @@ def dbs(request):
     if not db_rpr_tbl.has_body():
         return HttpResponse('<div class="undefined">[No database has been created in this server]</div>')
     db_rpr_tbl_html = db_rpr_tbl.to_element()
-    db_rpr_tbl_opts = htm.table_options('db', with_keys=True, 
-        select_actions=True)
+    db_rpr_tbl_opts = htm.table_options('db', with_keys=True, )
     
     return HttpResponse(db_rpr_tbl_opts + db_rpr_tbl_html)
     

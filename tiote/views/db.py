@@ -88,8 +88,7 @@ def tbl_overview(request):
     if not tables_table.has_body():
         return HttpResponse('<div class="undefined">[No table has been defined in this table]</div>')
     tables_table_html = tables_table.to_element()
-    table_options_html = htm.table_options('tbl', with_keys=True, 
-        select_actions=True)
+    table_options_html = htm.table_options('tbl', with_keys=True, )
     return HttpResponse(table_options_html + tables_table_html)
     
 
