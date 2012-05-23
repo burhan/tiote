@@ -103,7 +103,7 @@ def generate_sidebar(request):
             # append whole li element
             _list.append("<li{0}>{1}</li>".format(li_pfx, a))
             
-        placeholder = '<h6 class="placeholder">%ss:</h6>' % fns.ABBREVS['schm']
+        placeholder = '<h6 class="placeholder">%ss:</h6>' % fns._abbr['schm']
         sfx = "<ul>{0}</ul>".format( ''.join(_list) )
 
         ret_string = '<h6><a class="icon-back" href="#sctn=hm&v=hm">back home</a></h6>\
@@ -151,7 +151,7 @@ def generate_sidebar(request):
         ret_string = bck_lnk + '</h6>\
 <h6>quick nav:</h6><div class="sidebar-item"><img src="{4}/tt_img/databases.png" /> {0}</div>{1}{2}{3}'.format( 
             db_selection_form, s, # 0 & 1
-            '<h6 class="placeholder">%ss:</h6>' % fns.ABBREVS[request.GET.get('sctn')], # 2
+            '<h6 class="placeholder">%ss:</h6>' % fns._abbr[request.GET.get('sctn')], # 2
             "<ul>{0}</ul>".format( ''.join(sfx_list) ), # 3
             static_addr # 4
         )

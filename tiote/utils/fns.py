@@ -4,7 +4,7 @@ from django.contrib.sessions.models import Session
 from django.template import loader, RequestContext, Template
 
 # a list of all the abbreviations in use
-ABBREVS = {
+_abbr = {
     'sctn': 'section',
     'tbl': 'table',
     'v': 'view',
@@ -70,8 +70,8 @@ def site_proc(request):
     # - searching both by keys and values
     return {
         'ajaxKey': request.session.get('ajaxKey',''),
-        'abbrevs_keys': ABBREVS.keys(),
-        'abbrevs_values': ABBREVS.values()
+        'abbrevs_keys': _abbr.keys(),
+        'abbrevs_values': _abbr.values()
     }
 
 def http_500(msg=''):

@@ -76,6 +76,7 @@ def home(request):
 
     return fns.response_shortcut(request, extra_vars=extra_vars)
 
+
 def dbs(request):
     '''
     list and provides an tabular interface to execute actions on databases

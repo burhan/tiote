@@ -25,72 +25,59 @@ def browse(request):
             'limit': tbl_data['limit'] },
         show_tbl_optns = True,
         tbl_optn_type='data',
+        empty_err_msg="This table contains no items"
         )
     return c.get(request)
 
 
-def structure(request):
-    conn_params = fns.get_conn_params(request)
-    # column deletion
-    if request.method == 'POST' and request.GET.get('upd8'):
-        l = request.POST.get('whereToEdit').strip().split(';');
-        conditions = fns.get_conditions(l)
-        q = ''
-        if request.GET.get('upd8') == 'edit':
-            q = 'drop_table'
-            return HttpResponse('update not yet implemented!')
-        elif request.GET.get('upd8') == 'delete':
-            q = 'delete_column'
-            query_data = {'db': request.GET.get('db'), 'table': request.GET.get('table'),
-                          'conditions': conditions}
-            
-            return qry.rpr_query(conn_params, q, query_data)
-        
-    # view data
-    static_addr = fns.render_template(request, '{{STATIC_URL}}')
-    subv = request.GET.get('subv', 'cols')
-    d = {}
-    _subnav = {'cols': fns.ABBREVS['cols'], 'idxs':fns.ABBREVS['idxs']}
-    if subv == 'cols':
-        d['title'] = _subnav[subv]
-#        tbl_struct_data = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
-#        columns_table = htm.HtmlTable(attribs = {'id': 'tbl_columns'},
-#            props = {'count': tbl_struct_data['count'], 'with_checkboxes': True,},
-#            static_addr = static_addr, **tbl_struct_data
-#        )
-        eng = sa._get_or_set_engine(request)
-        ds = sa.tbl_cols_desc(eng, request.GET.get('tbl'), request.GET.get('schm'))
-        order = ['name', 'type', 'nullable', 'default']
-        columns_table = htm.SAHtmlTable(ds, order=order, 
-            props = {'count': len(ds), 'with_checkboxes': True, 'keys': (('name', 'key'), )},
-            static_addr = static_addr)
-        
-        d['table'] = columns_table.to_element() if columns_table.has_body() \
-            else '<div class="undefined">[Table contains no columns]</div>'
-    elif subv == 'idxs':
-        d['title'] = _subnav[subv]
-        indexes_data = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
-        indexes_table = htm.HtmlTable(static_addr = static_addr,
-            props = {'count': indexes_data['count'], 'with_checkboxes': True},
-            **indexes_data
-        )
-        d['table'] = indexes_table.to_element() if indexes_table.has_body() \
-            else '<div class="undefined">[Table contains no indexes]</div>'
-    # generate arranged href
+def base_struct(request, **kwargs):
+    # get url prefix
     dest_url = SortedDict(); _d = {'sctn':'tbl','v':'struct'}
     for k in _d: dest_url[k] = _d[k] # init this way to maintain order
     for k in ('db', 'schm','tbl',): 
         if request.GET.get(k): dest_url[k] = request.GET.get(k)
-    _l = []
-    # generate navigation ul
-    for k in ('cols', 'idxs',):
-        _l.append('<li{0}><a href="{1}{2}">{3}<span>|</span></a></li>'.format(
-            ' class="active"' if _subnav[k].lower() == d['title'].lower() else '',
-            '#'+urlencode(dest_url)+'&subv=', k, _subnav[k])
-        )
-    ret_str = '<div style="margin-bottom:-5px;"><ul class="subnav">{0}</ul></div>{table}'.format(
-         "".join(_l),**d)
-    return HttpResponse(ret_str)
+
+    url_prefix = urlencode(dest_url)
+
+    c = _abs.CompositeTableView(
+        url_prfx = url_prefix, 
+        sub_nav_list = ['cols', 'idxs',],
+        **kwargs)
+
+    return c.get(request)
+
+
+def cols_struct(request):
+    conn_params = fns.get_conn_params(request)
+
+    # column editing/deleting
+    if request.method == 'POST' and request.GET.get('upd8'):
+        l = request.POST.get('whereToEdit').strip().split(';')
+        conditions = fns.get_conditions(l)
+        
+        if request.GET.get('upd8') == 'delete':
+            q = 'delete_column'
+            query_data = {'db': request.GET.get('db'), 'table': request.GET.get('table'),
+                'conditions': conditions}
+            
+            return qry.rpr_query(conn_params, q, query_data)
+
+    # table view
+    tbl_cols = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
+    return base_struct(request, tbl_data=tbl_cols, show_tbl_optns=False, 
+        subv='cols', empty_err_msg="Table contains no indexes")
+
+
+def idxs_struct(request):
+    conn_params = fns.get_conn_params(request)
+
+    if request.method == 'POST':
+        pass
+
+    # view and creation things
+    tbl_idxs = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
+    return base_struct(request, tbl_data=tbl_idxs, show_tbl_optns=False, 
+        subv='idxs', empty_err_msg="Table contains no columns")
 
 
 def insert(request):
@@ -195,7 +182,9 @@ def route(request):
     elif request.GET.get('v') == 'browse':
         return browse(request)
     elif request.GET.get('v') in ('structure', 'struct'):
-        return structure(request)
+        if request.GET.get('subv') == 'idxs':
+            return idxs_struct(request)
+        return cols_struct(request) # default
     elif request.GET.get('v') in ('insert', 'ins'):
         return insert(request)
     else:

@@ -1,11 +1,11 @@
 import json
 
-from django.http import HttpResponse, Http404
-from django.template import loader, RequestContext, Template
+from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
 from urllib import urlencode
 from django.utils.datastructures import SortedDict
 from tiote import forms
+from tiote.views import _abs
 from tiote.utils import *
 
 
@@ -71,7 +71,8 @@ def tbl_overview(request):
     get_data = fns.qd(request.GET)
     if not get_data.has_key('schm'): get_data['schm'] = 'public'
     tbl_data = qry.rpr_query(conn_params, 'table_rpr', get_data)
-    # setup urls with SortedDict to maintain structure
+
+    # setup url_prfx with SortedDict to maintain structure
     dest_url = SortedDict(); d = {'sctn':'tbl','v':'browse'}
     for k in d: dest_url[k] = d[k]
     for k in ('db', 'schm',): 
@@ -89,6 +90,8 @@ def tbl_overview(request):
         return HttpResponse('<div class="undefined">[No table has been defined in this table]</div>')
     tables_table_html = tables_table.to_element()
     table_options_html = htm.table_options('tbl', with_keys=True, )
+
+
     return HttpResponse(table_options_html + tables_table_html)
     
 

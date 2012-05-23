@@ -42,9 +42,9 @@ def stored_query(query_type):
         FROM 
             information_schema.schemata
         WHERE 
-            schema_name NOT LIKE '%pg_toast%' 
-            AND schema_name NOT LIKE '%pg_temp%'
-            AND schema_name NOT IN ('pg_catalog', 'information_schema'),
+            schema_name NOT LIKE '%pg_toast%' AND
+            schema_name NOT LIKE '%pg_temp%' AND
+            schema_name NOT IN ('pg_catalog', 'information_schema'),
         """,
         # - system catalogs are discovered
     

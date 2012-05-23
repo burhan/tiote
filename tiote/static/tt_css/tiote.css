@@ -117,6 +117,7 @@ h5.heading {
 
 .subnav .active a {
 	color: #888;
+	cursor: default;
 }
 
 .undefined {
