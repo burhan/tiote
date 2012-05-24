@@ -5,7 +5,7 @@ from django.template import loader, RequestContext, Template
 from django.views.decorators.http import require_http_methods
 from django.forms.formsets import formset_factory
 
-from tiote import forms, VERSION
+from tiote import forms, VERSION, sa
 from tiote.utils import *
 from tiote.views import base
 
@@ -99,10 +99,13 @@ def dbs(request):
     # view things
     #inits
     tbl_data = qry.common_query(conn_params, 'db_rpr',)
-    
-    props={'go_link': True, 'go_link_type': 'href', 'go_link_dest': '#sctn=db&db',
-        'keys': (('name', 'key'),)
+
+    props={'go_link': True, 'go_link_type': 'href', 'keys': (('name', 'key'),),
+        'go_link_dest': '#sctn=db&v=ov&db=%s',
     }
+
+    if conn_params['dialect'] == 'postgresql':
+        props['go_link_dest'] = '#sctn=db&v=ov&db=%s&schm=' + sa.get_default_schema(request)
 
     c = base.TableView(tbl_data=tbl_data, tbl_props=props, show_tbl_optns=True, tbl_optn_type='db',
         empty_err_msg="This server has no databases", 

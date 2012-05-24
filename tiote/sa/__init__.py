@@ -125,3 +125,7 @@ def transform_args_to_bindparams(argmap):
     for key, value in argmap.iteritems():
         _l.append(sql.bindparam(key, value))
     return _l
+
+def get_default_schema(request):
+    _engine = _get_or_set_engine(request)
+    return _engine.dialect._get_default_schema_name(_engine.connect())

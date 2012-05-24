@@ -2,6 +2,7 @@ from django.http import HttpResponse, Http404
 from django.template import loader, RequestContext, Template
 
 import qry, fns
+from tiote import sa
 
 def table_options(opt_type, with_keys=True, ):
     '''
@@ -78,7 +79,7 @@ def generate_sidebar(request):
     (conn_params['dialect'] == 'mysql' and request.GET.get('sctn') == 'db'):
         li_list = []
         for db_row in db_list:
-            sufx = "&schm=public" if conn_params['dialect'] == 'postgresql' else ''
+            sufx = "&schm=%s" % sa.get_default_schema(request) if conn_params['dialect'] == 'postgresql' else ''
             a = "<a class='icon-database' href='#sctn=db&v=ov&db={0}{1}'>{0}</a>".format(db_row[0],sufx)
             active_li = ' class="active"' if request.GET.get('db') == db_row[0] else '' # this would mark an item for hightlighting 
                                                                                         # occurs in the 'db' section of MySQL dialect
@@ -98,7 +99,7 @@ def generate_sidebar(request):
                     _dict['db'], schm_row[0]
                 )
             # decide selected schema link
-            li_pfx = " class='active'" if request.GET.get('schm', 'public') == schm_row[0] else ''
+            li_pfx = " class='active'" if request.GET.get('schm', sa.get_default_schema(request) ) == schm_row[0] else ''
             # append whole li element
             _list.append("<li{0}>{1}</li>".format(li_pfx, a))
             
@@ -243,8 +244,8 @@ class HtmlTable():
             # go_link_type determines the characteristics of the anchor: href || onclick
             if self.props.has_key('go_link') > 0 and self.props['go_link'] == True:
                 l_props.append( 
-                    '<a href="{0}={1}" class="go_link">{2}</a>'.format(
-                        self.props['go_link_dest'],row[0],
+                    '<a href="{0}" class="go_link">{1}</a>'.format(
+                        self.props['go_link_dest'] % row[0],
                         '<img src="{0}/tt_img/goto.png" />'.format(static_addr)
                     )
                 )
@@ -294,13 +295,3 @@ class HtmlTable():
     def __unicode__(self):
         return self.to_element()
 
-
-class SAHtmlTable(HtmlTable):
-    
-    def __init__(self, ds, order=None, **kwargs): #ds : data structure
-        d = sa.parse_sa_result(ds, order)
-        HtmlTable.__init__(self, columns=d['columns'], rows=d['rows'], count=len(ds), **kwargs)        
-        
-        
-        
-        

@@ -61,7 +61,7 @@ def tbl_overview(request):
         if request.GET.get(k): dest_url[k] = request.GET.get(k) 
     
     properties = {'keys': (('table', 'key'),), 'go_link': True, 'go_link_type': 'href', 
-        'go_link_dest': '#'+urlencode(dest_url)+'&tbl',
+        'go_link_dest': '#'+urlencode(dest_url)+'&tbl=%s',
         }
 
     return base_overview(request, tbl_data=tbl_data, tbl_props=properties, show_tbl_optns=True,
