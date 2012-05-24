@@ -7,7 +7,7 @@ from django.forms.formsets import formset_factory
 
 from tiote import forms, VERSION
 from tiote.utils import *
-from tiote.views import _abs
+from tiote.views import base
 
 
 def home(request):
@@ -104,7 +104,7 @@ def dbs(request):
         'keys': (('name', 'key'),)
     }
 
-    c = _abs.TableView(tbl_data=tbl_data, tbl_props=props, show_tbl_optns=True, tbl_optn_type='db',
+    c = base.TableView(tbl_data=tbl_data, tbl_props=props, show_tbl_optns=True, tbl_optn_type='db',
         empty_err_msg="This server has no databases", 
         )
     

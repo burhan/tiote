@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 from urllib import urlencode
 from django.utils.datastructures import SortedDict
 from tiote import forms
-from tiote.views import _abs
+from tiote.views import base
 from tiote.utils import *
 
 
@@ -19,7 +19,7 @@ def base_overview(request, **kwargs):
     for k in ('db', 'schm','tbl',): 
         if request.GET.get(k): dest_url[k] = request.GET.get(k)
 
-    c = _abs.CompositeTableView( 
+    c = base.CompositeTableView( 
         subnav_list = ('tbl',),
         url_prfx = urlencode(dest_url),
         **kwargs)

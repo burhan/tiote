@@ -6,7 +6,7 @@ from django.utils.datastructures import SortedDict
 from urllib import urlencode
 from tiote import forms, sa
 from tiote.utils import *
-from tiote.views import _abs
+from tiote.views import base
 
 
 def browse(request):
@@ -19,7 +19,7 @@ def browse(request):
     tbl_data = qry.rpr_query(conn_params, 'browse_table',
         fns.qd(request.GET), fns.qd(request.POST))
     
-    c = _abs.TableView(tbl_data=tbl_data,
+    c = base.TableView(tbl_data=tbl_data,
         tbl_props = {'with_checkboxes': True, 'display_row': True,},
         tbl_store = {'total_count':tbl_data['total_count'], 'offset': tbl_data['offset'],
             'limit': tbl_data['limit'] },
@@ -39,7 +39,7 @@ def base_struct(request, **kwargs):
 
     url_prefix = urlencode(dest_url)
 
-    c = _abs.CompositeTableView(
+    c = base.CompositeTableView(
         url_prfx = url_prefix, 
         subnav_list = ('cols', 'idxs',),
         **kwargs)
