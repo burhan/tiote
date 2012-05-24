@@ -3,6 +3,16 @@
 Changelog
 =========
 
+0.2.2 : *May 24, 2012*
+----------------------
+performance optimisations
+
+rewrote the logic for making queries and generating views
+
+now makes use of a lot of SQLAlchemy functions
+
+bug fixes
+
 0.2.1 : *May 3, 2012*
 ---------------------
 
