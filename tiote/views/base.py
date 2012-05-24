@@ -79,6 +79,7 @@ class BareTableView(View):
 
         return ret_str
 
+
 class TableView(BareTableView, GETOnlyView):
     '''
     Wraps BareTableView to return a HttpResponse as opposed to a string.
@@ -123,4 +124,9 @@ class CompositeTableView(BareTableView):
         subnav_str = '<div style="margin-bottom:-5px;"><ul class="subnav">{0}</ul></div>'.format(''.join(_l))
         ret_str = subnav_str + singl_tbl_view
         return HttpResponse(ret_str)
+
+
+class BareFormView(View): pass
+
+class FormView(BareFormView): pass
 

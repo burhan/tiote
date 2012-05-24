@@ -122,7 +122,10 @@ class InsertForm(forms.BaseForm):
                 f[row[0]] = forms.CharField(widget=forms.Textarea(attrs={'cols':'', 'rows':''}))
                 # if row[4]: f[row[0]].max_length = row[4] #max_length
 
-            elif row[1] in ('boolean', ): f[row[0]] = forms.BooleanField()
+            elif row[1] in ('boolean', ):
+                f[row[0]] = forms.BooleanField(
+                    required=False # so it can accept 'True' and 'False', not just 'True'
+                    )
 
             elif row[1] in ('tinyint', 'smallint', 'mediumint', 'int', 'bigint','integer',):
                 f[row[0]] = forms.IntegerField()
