@@ -52,6 +52,7 @@ class BareTableView(View):
         # build table properties
         if not hasattr(self, 'tbl_attribs'): self.tbl_attribs = {}
         if not hasattr(self, 'tbl_props'): self.tbl_props = {}
+        if not hasattr(self, 'show_tbl_optns'): self.show_tbl_optns = False
         if self.tbl_data.has_key('keys'):
             self.tbl_props['keys'] = self.tbl_data['keys']['rows']
         self.tbl_props['count'] = self.tbl_data['count'],
@@ -62,6 +63,7 @@ class BareTableView(View):
             rows = self.tbl_data['rows'],
             props = self.tbl_props,
             attribs = self.tbl_attribs,
+            **kwargs
             )
 
         if self.show_tbl_optns:
@@ -86,29 +88,29 @@ class TableView(BareTableView, GETOnlyView):
 
 class CompositeTableView(BareTableView):
     '''
-    Returns a tab page with only one html_table and pointers to others
+    Returns a tab page with only one html_table and pointers(links) to others
 
     Assumed keyword args
     self.subv : current half page
-    self.sub_nav_list
+    self.subnav_list
     self.url_prfx
     '''
 
     def get(self, request, *args, **kwargs):
         singl_tbl_view = super(CompositeTableView, self).get(request, *args, **kwargs)
 
-        if not hasattr(self, 'sub_nav_list'):
-            raise Exception('sub_nav_list must be passed into the constructor')
+        if not hasattr(self, 'subnav_list'):
+            raise Exception('subnav_list must be passed into the constructor')
 
         if not hasattr(self, "subv_key"):
             self.subv_key = 'subv'
 
-        if len(self.sub_nav_list) < 1:
+        if len(self.subnav_list) <= 1:
             # no need for tabbing
             return HttpResponse(singl_tbl_view)
         
         _l = []
-        for _it in self.sub_nav_list:
+        for _it in self.subnav_list:
             _l.append('<li{0}><a href="{1}">{2}<span>|</span></a></li>'.format(
                 ' class="active"' if _it == self.subv else '',
                 '#%s&%s=%s' % (self.url_prfx, self.subv_key, _it),

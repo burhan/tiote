@@ -9,46 +9,27 @@ from tiote.views import _abs
 from tiote.utils import *
 
 
-def overview(request):
-    '''
-    A collector and disperser of 'overview' views. It appends the mini-navigation(subnav) to
-    the response of 'overview' views if the request is a GET request else leave it as it is.
-    '''
+def base_overview(request, **kwargs):
+    ''' generates the CompositeTableView for all overview functions '''
     conn_params = fns.get_conn_params(request)
-    subv = request.GET.get('subv', 'tbl') # defaults to tbl
-    if subv == 'tbl': h = tbl_overview(request)
-    # elif
-    if request.method == 'GET':
-        _subnav = {'tbl': fns.ABBREVS['tbl'], 'seq':fns.ABBREVS['seq']}
-        # fill this list as per implementation
-        implemented_dict = {
-            'mysql': ('tbl',),
-            'postgresql': ('tbl',)
-        }
-        # generate href with hash ordered as tiote needs
-        dest_url = SortedDict(); _d = {'sctn':'db','v':'overview'}
-        for k in _d: dest_url[k] = _d[k] # init this way to maintain order
-        for k in ('db', 'schm','tbl',): 
-            if request.GET.get(k): dest_url[k] = request.GET.get(k)
-        # generate navigation ul
-        # if the number of default elements to show is just one then skip this whole process
-        if len(implemented_dict[ conn_params['dialect'] ]) > 1:
-            _list = []
-            for k in implemented_dict[ conn_params['dialect'] ]:
-                _list.append('<li{0}><a href="{1}{2}">{3}<span>|</span></a></li>'.format(
-                    ' class="active"' if _subnav[k] == _subnav[subv] else '',
-                    '#'+urlencode(dest_url)+'&subv=', k, _subnav[k] +'s'
-                    )
-                )
-            if len(_list):
-                subnav_str = '<div style="margin-bottom:-5px;"><ul class="subnav">{0}</ul></div>'.format(''.join(_list))
-                h.content = subnav_str + h.content
-    return h
+
+    # generate href with hash ordered as tiote needs
+    dest_url = SortedDict(); _d = {'sctn':'db','v':'overview'}
+    for k in _d: dest_url[k] = _d[k] # init this way to maintain order
+    for k in ('db', 'schm','tbl',): 
+        if request.GET.get(k): dest_url[k] = request.GET.get(k)
+
+    c = _abs.CompositeTableView( 
+        subnav_list = ('tbl',),
+        url_prfx = urlencode(dest_url),
+        **kwargs)
+
+    return c.get(request, **kwargs)
 
 
 def tbl_overview(request):
     '''
-    'overview' view of tables.
+    'overview' view of tables. editing, deletion and creation of tables
     '''
     conn_params = fns.get_conn_params(request)
     # table deletion or emptying request catching and handling
@@ -68,6 +49,7 @@ def tbl_overview(request):
         h.set_cookie('TT_UPDATE_SIDEBAR', 'ye') # update sidebar in case there have been a deletion
         return h
 
+    # generate view data
     get_data = fns.qd(request.GET)
     if not get_data.has_key('schm'): get_data['schm'] = 'public'
     tbl_data = qry.rpr_query(conn_params, 'table_rpr', get_data)
@@ -77,24 +59,15 @@ def tbl_overview(request):
     for k in d: dest_url[k] = d[k]
     for k in ('db', 'schm',): 
         if request.GET.get(k): dest_url[k] = request.GET.get(k) 
-    props_keys = (('table', 'key'),)
-    static_addr = fns.render_template(request, '{{STATIC_URL}}')
-    tables_table = htm.HtmlTable(static_addr=static_addr,
-        props={'count':tbl_data['count'],'with_checkboxes': True,
-            'go_link': True, 'go_link_type': 'href', 
-            'go_link_dest': '#'+urlencode(dest_url)+'&tbl',
-            'keys': props_keys
-        }, **tbl_data
-    )
-    if not tables_table.has_body():
-        return HttpResponse('<div class="undefined">[No table has been defined in this table]</div>')
-    tables_table_html = tables_table.to_element()
-    table_options_html = htm.table_options('tbl', with_keys=True, )
+    
+    properties = {'keys': (('table', 'key'),), 'go_link': True, 'go_link_type': 'href', 
+        'go_link_dest': '#'+urlencode(dest_url)+'&tbl',
+        }
 
-
-    return HttpResponse(table_options_html + tables_table_html)
+    return base_overview(request, tbl_data=tbl_data, tbl_props=properties, show_tbl_optns=True,
+        tbl_optn_type='tbl', subv='tbls', empty_err_msg="This database contains no tables")
     
 
 def route(request):
     if request.GET['v'] in ('overview', 'ov'):
-        return overview(request)
+        return tbl_overview(request) # default

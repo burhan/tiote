@@ -41,7 +41,7 @@ def base_struct(request, **kwargs):
 
     c = _abs.CompositeTableView(
         url_prfx = url_prefix, 
-        sub_nav_list = ['cols', 'idxs',],
+        subnav_list = ('cols', 'idxs',),
         **kwargs)
 
     return c.get(request)

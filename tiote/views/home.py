@@ -7,6 +7,7 @@ from django.forms.formsets import formset_factory
 
 from tiote import forms, VERSION
 from tiote.utils import *
+from tiote.views import _abs
 
 
 def home(request):
@@ -99,22 +100,15 @@ def dbs(request):
     #inits
     tbl_data = qry.common_query(conn_params, 'db_rpr',)
     
-    props_keys = (('name', 'key'),)
-    static_addr = fns.render_template(request, '{{STATIC_URL}}')
-    db_rpr_tbl = htm.HtmlTable(static_addr=static_addr,
-        props={'count':tbl_data['count'],'with_checkboxes': True,
-            'go_link': True, 'go_link_type': 'href', 
-            'go_link_dest': '#sctn=db&db',
-            'keys': props_keys
-        }, **tbl_data
-    )
-    if not db_rpr_tbl.has_body():
-        return HttpResponse('<div class="undefined">[No database has been created in this server]</div>')
-    db_rpr_tbl_html = db_rpr_tbl.to_element()
-    db_rpr_tbl_opts = htm.table_options('db', with_keys=True, )
+    props={'go_link': True, 'go_link_type': 'href', 'go_link_dest': '#sctn=db&db',
+        'keys': (('name', 'key'),)
+    }
+
+    c = _abs.TableView(tbl_data=tbl_data, tbl_props=props, show_tbl_optns=True, tbl_optn_type='db',
+        empty_err_msg="This server has no databases", 
+        )
     
-    return HttpResponse(db_rpr_tbl_opts + db_rpr_tbl_html)
-    
+    return c.get(request)
 
 def route(request):
     if request.GET.get('v') in ('home', 'hm'):
