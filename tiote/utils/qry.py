@@ -2,7 +2,7 @@ import json
 from django.http import HttpResponse
 from django.conf import settings
 
-from tiote import sql
+from tiote import sql, sa
 import fns
 
 
@@ -23,14 +23,14 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         query_data = {}
         query_data.update(get_data, **post_data)
         q = sql.generate_query( query_type, conn_params['dialect'],query_data)
-        result = sql.short_query(conn_params, q)
+        result = sa.short_query(conn_params, q)
         return HttpResponse( json.dumps(result) )
     
     # specific queries with implementations similar to both dialects
     elif query_type == 'user_rpr':
         if conn_params['dialect'] == 'mysql':
             conn_params['db'] = 'mysql'
-        r = sql.full_query(conn_params, 
+        r = sa.full_query(conn_params, 
             sql.stored_query(get_data['query'],conn_params['dialect']) )
         if type(r) == dict:
             r
@@ -40,7 +40,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     elif query_type in ('indexes', 'primary_keys', 'foreign_key_relation'):
         
         if conn_params['dialect'] == 'postgresql': conn_params['db'] = get_data['db']
-        r = sql.full_query(conn_params,
+        r = sa.full_query(conn_params,
             sql.generate_query(query_type, conn_params['dialect'], get_data)[0])
         return r
         
@@ -58,7 +58,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         conn_params['db'] = get_data['db']
         # assert False
         q = sql.generate_query(query_type, conn_params['dialect'], sub_q_data)
-        r =  sql.full_query(conn_params, q[0])
+        r =  sa.full_query(conn_params, q[0])
         return r
         
 
@@ -74,7 +74,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
             q = 'table_structure'
         else: q = query_type
 
-        r = sql.full_query(conn_params,
+        r = sa.full_query(conn_params,
             sql.generate_query(q, conn_params['dialect'], sub_q_data)[0] )
         # further needed processing
         if conn_params['dialect'] == 'postgresql' and query_type.count('table_structure'):
@@ -113,10 +113,10 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         # retrieve and run queries
         conn_params['db'] = get_data['db']
         keys = rpr_query(conn_params, 'primary_keys', sub_q_data)
-        count = sql.full_query(conn_params, 
+        count = sa.full_query(conn_params, 
             sql.generate_query('count_rows', conn_params['dialect'], sub_q_data)[0],
             )['rows']
-        r = sql.full_query(conn_params,
+        r = sa.full_query(conn_params,
             sql.generate_query(query_type, conn_params['dialect'], sub_q_data)[0]
             )
         # format and return data
@@ -136,7 +136,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
             conn_params['db'] = query_data['db']
             
         q = sql.generate_query(query_type, conn_params['dialect'], query_data)
-        r =  sql.full_query(conn_params,
+        r =  sa.full_query(conn_params,
             q[0])
         return r['rows']
 
@@ -150,7 +150,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         if query_type == 'describe_databases':
             conn_params['db'] = 'INFORMATION_SCHEMA';
             query = sql.stored_query(query_type, conn_params['dialect'])
-            return sql.full_query(conn_params, query)
+            return sa.full_query(conn_params, query)
         
         else:
             return fns.http_500('query not yet implemented!')
@@ -193,7 +193,7 @@ def common_query(conn_params, query_name, get_data={}):
                 else: query_name = "user_schema_list" # default
             
             conn_params['db'] == get_data.get('db') if get_data.get('db') else conn_params['db']
-            r = sql.full_query(conn_params,
+            r = sa.full_query(conn_params,
                 sql.stored_query(query_name, conn_params['dialect']))
 #            raise Exception(r)
             return r
@@ -201,7 +201,7 @@ def common_query(conn_params, query_name, get_data={}):
     elif conn_params['dialect'] == 'mysql':
         if query_name in mysql_redundant_queries :
             # this kind of queries require no special attention
-            return sql.full_query(conn_params,
+            return sa.full_query(conn_params,
                 sql.stored_query(query_name, conn_params['dialect']))
 
 
@@ -241,7 +241,7 @@ def insert_row(conn_params, get_data={}, form_data={}):
         )
     
     # run query and return results
-    ret = sql.short_query(conn_params, (q, ))
+    ret = sa.short_query(conn_params, (q, ))
     if ret['status'] == 'success': ret['msg'] = 'Insertion succeeded'
     # format status messages used in flow control (javascript side)
     # replaces with space and new lines with the HTML equivalents
@@ -286,7 +286,7 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
         set_stmts = u", ".join(_l_set), where_stmts = u"AND ".join(_l_where), **get_data 
     )
     # run query and return results
-    ret = sql.short_query(conn_params, (q, ))
+    ret = sa.short_query(conn_params, (q, ))
     if ret['status'] == 'success': ret['msg'] = 'Row update succeeded'
     # format status messages used in flow control (javascript side)
     # replaces with space and new lines with the HTML equivalents
@@ -306,7 +306,7 @@ def do_login(request, cleaned_data):
     dict_post = {'username':username,'password':password,'database_driver':database_driver, 'host':host}
     if 'connection_database' in cleaned_data:
         dict_post['connection_database'] = cleaned_data['connection_database']
-    dict_cd = sql.model_login(dict_post)
+    dict_cd = sa.model_login(dict_post)
     if not dict_cd['login']:
         #authentication failed
         return dict_cd
@@ -327,7 +327,7 @@ def get_home_variables(request):
     p = fns.get_conn_params(request)
     variables = {'user': p['username'], 'host': p['host']}
     variables['dialect'] = 'PostgreSQL' if p['dialect'] == 'postgresql' else 'MySQL'
-    result = sql.full_query( p, sql.stored_query('variables', p['dialect']))
+    result = sa.full_query( p, sql.stored_query('variables', p['dialect']))
     if p['dialect'] == 'postgresql':
         variables['version'] = result['rows'][0]
         return variables

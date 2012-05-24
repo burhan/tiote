@@ -52,6 +52,7 @@ class BareTableView(View):
         # build table properties
         if not hasattr(self, 'tbl_attribs'): self.tbl_attribs = {}
         if not hasattr(self, 'tbl_props'): self.tbl_props = {}
+        if not hasattr(self, 'tbl_store'): self.tbl_store = {}
         if not hasattr(self, 'show_tbl_optns'): self.show_tbl_optns = False
         if self.tbl_data.has_key('keys'):
             self.tbl_props['keys'] = self.tbl_data['keys']['rows']
@@ -63,6 +64,7 @@ class BareTableView(View):
             rows = self.tbl_data['rows'],
             props = self.tbl_props,
             attribs = self.tbl_attribs,
+            store = self.tbl_store,
             **kwargs
             )
 

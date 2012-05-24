@@ -5,8 +5,10 @@ from django.template import loader, RequestContext, Template
 from django.views.decorators.gzip import gzip_page
 from django.conf import settings
 
-from tiote import forms, views, sql
+from tiote import forms, sql
 from tiote.utils import *
+from tiote.views import *
+
 
 @gzip_page
 def index(request):
@@ -78,11 +80,11 @@ def ajax(request):
     if request.GET.get('sctn', False) == 'begin':
         return begin(request, fns.qd(request.GET).get('v', False))
     if request.GET.get('sctn', False) == 'hm':
-        return views.home.route(request)
+        return home.route(request)
     elif request.GET.get('sctn', False) == 'db':
-        return views.db.route(request)
+        return db.route(request)
     elif request.GET.get('sctn', False) == 'tbl':
-        return views.tbl.route(request)
+        return tbl.route(request)
     else:
         return fns.http_500('request corresponses to no function!')
    

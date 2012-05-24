@@ -1,3 +1,6 @@
+from tiote import sa
+from sqlalchemy import text
+
 
 def stored_query(query_type):
     
@@ -47,6 +50,7 @@ def stored_query(query_type):
 
 
 def generate_query(query_type, query_data=None):
+    bindparams = sa.transform_args_to_bindparams(query_data)
     
     # would be a function when users view is reenabled
     if query_type == 'create_user':
@@ -102,7 +106,7 @@ def generate_query(query_type, query_data=None):
         return (q, )
     
     elif query_type == 'column_list':
-        return ("SELECT column_name FROM information_schema.columns WHERE table_schema='{db}' AND table_name='{tbl}'")
+        return ("SELECT column_name FROM information_schema.columns WHERE table_schema= :db AND table_name= :tbl")
     
     elif query_type == 'drop_user':
         queries = []
@@ -112,7 +116,7 @@ def generate_query(query_type, query_data=None):
         return tuple(queries)
     
     elif query_type == 'table_rpr':
-        q = """
+        stmt = """
         SELECT 
             TABLE_NAME AS 'table',
             TABLE_ROWS AS 'rows',
@@ -121,12 +125,13 @@ def generate_query(query_type, query_data=None):
         FROM
             information_schema.tables
         WHERE 
-            TABLE_SCHEMA = '{db}'
-        """.format(**query_data)
-        return (q,)
+            TABLE_SCHEMA =  :db
+        """
+        q0 = text(stmt, bindparams=bindparams)
+        return (q0,)
     
     elif query_type == 'indexes':
-        q0 = """
+        stmt = """
         SELECT DISTINCT 
             kcu.column_name, 
             kcu.constraint_name, 
@@ -136,14 +141,15 @@ def generate_query(query_type, query_data=None):
             information_schema.table_constraints as tc 
         WHERE 
             kcu.constraint_name = tc.constraint_name 
-            AND kcu.table_schema='{db}' 
-            AND tc.table_schema='{db}' 
-            AND kcu.table_name='{tbl}'
-        """.format(**query_data)
+            AND kcu.table_schema= :db 
+            AND tc.table_schema= :db 
+            AND kcu.table_name=  :tbl
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
     elif query_type == 'primary_keys':
-        q0 = """
+        stmt = """
         SELECT DISTINCT 
             kcu.column_name, 
             kcu.constraint_name, 
@@ -153,16 +159,17 @@ def generate_query(query_type, query_data=None):
             information_schema.table_constraints as tc
         WHERE
             kcu.constraint_name = tc.constraint_name AND 
-            kcu.table_schema='{db}' AND 
-            tc.table_schema='{db}' AND
-            kcu.table_name='{tbl}' AND 
-            tc.table_name='{tbl}' AND
+            kcu.table_schema= :db AND 
+            tc.table_schema= :db AND
+            kcu.table_name= :tbl AND 
+            tc.table_name= :tbl AND
             tc.constraint_type='PRIMARY KEY'
-        """.format(**query_data)
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
     elif query_type == 'table_structure':
-        q0 ="""
+        stmt ="""
         SELECT 
             column_name AS "column", 
             column_type AS "type", 
@@ -172,14 +179,15 @@ def generate_query(query_type, query_data=None):
         FROM
             information_schema.columns 
         WHERE 
-            table_schema="{db}" AND
-            table_name="{tbl}"
+            table_schema= :db AND
+            table_name= :tbl
         ORDER BY ordinal_position ASC
-        """.format(**query_data)
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
 
     elif query_type == 'raw_table_structure':
-        q0 = """
+        stmt = """
         SELECT 
             column_name AS "column", 
             data_type AS "type", 
@@ -190,18 +198,20 @@ def generate_query(query_type, query_data=None):
         FROM 
             information_schema.columns 
         WHERE 
-            table_schema="{db}" 
-            AND table_name="{tbl}"
+            table_schema= :db 
+            AND table_name= :tbl
         ORDER BY ordinal_position ASC
-        """.format(**query_data)
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
     elif query_type == 'existing_tables':
-        q0 = """
+        stmt = """
         SELECT table_name 
         FROM information_schema.tables 
-        WHERE table_schema='{db}'
-        """.format(**query_data)
+        WHERE table_schema= :db
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
 
 

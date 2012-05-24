@@ -2,7 +2,6 @@ from django.http import HttpResponse, Http404
 from django.template import loader, RequestContext, Template
 
 import qry, fns
-from tiote import sa
 
 def table_options(opt_type, with_keys=True, ):
     '''

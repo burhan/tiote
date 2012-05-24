@@ -6,7 +6,7 @@ from django.utils.datastructures import SortedDict
 from urllib import urlencode
 from tiote import forms, sa
 from tiote.utils import *
-from tiote.views import base
+import base
 
 
 def browse(request):

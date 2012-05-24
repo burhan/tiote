@@ -1,3 +1,6 @@
+from tiote import sa
+from sqlalchemy import text
+
 
 def stored_query(query_type):
     
@@ -66,7 +69,8 @@ def stored_query(query_type):
 
 
 def generate_query(query_type, query_data=None):
-    
+    bindparams = sa.transform_args_to_bindparams(query_data)
+
     if query_type == 'create_user':
         # create role statement
         q0 = "CREATE ROLE {role_name}".format(**query_data)
@@ -110,7 +114,7 @@ def generate_query(query_type, query_data=None):
         return ("".join(_l).format(**query_data), )
     
     elif query_type == 'table_rpr':
-        q = """
+        stmt = """
         SELECT 
             t2.tablename AS table,
             t2.tableowner AS owner, 
@@ -121,13 +125,14 @@ def generate_query(query_type, query_data=None):
             INNER JOIN pg_catalog.pg_tables AS t2
             ON t1.relname = t2.tablename
         WHERE 
-            t2.schemaname='{schm}' 
+            t2.schemaname= :schm 
         ORDER BY t2.tablename ASC
-        """.format(**query_data)
-        return (q, )
+        """
+        q0 = text(stmt, bindparams=bindparams)
+        return (q0, )
     
     elif query_type == 'indexes':
-        q0 = """
+        stmt = """
         SELECT 
             kcu.column_name, kcu.constraint_name, tc.constraint_type
         FROM 
@@ -135,14 +140,15 @@ def generate_query(query_type, query_data=None):
             LEFT OUTER JOIN information_schema.table_constraints AS tc 
             ON (kcu.constraint_name = tc.constraint_name) 
         WHERE 
-            kcu.table_name='{tbl}' AND
-            kcu.table_schema='{schm}' AND
-            kcu.table_catalog='{db}'
-        """.format(**query_data)
+            kcu.table_name= :tbl AND
+            kcu.table_schema= :schm AND
+            kcu.table_catalog= :db
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0,)
     
     elif query_type == 'primary_keys':
-        q0 = """
+        stmt = """
         SELECT 
             kcu.column_name, kcu.constraint_name, tc.constraint_type
         FROM 
@@ -150,15 +156,16 @@ def generate_query(query_type, query_data=None):
             LEFT OUTER JOIN information_schema.table_constraints AS tc
             ON (kcu.constraint_name = tc.constraint_name) 
         WHERE
-            kcu.table_name='{tbl}' AND 
-            kcu.table_schema='{schm}' AND 
-            kcu.table_catalog='{db}' AND 
+            kcu.table_name = :tbl AND 
+            kcu.table_schema = :schm AND 
+            kcu.table_catalog = :db AND 
             (tc.constraint_type='PRIMARY KEY')
-        """.format(**query_data)
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
     elif query_type == 'table_structure':
-        q0 = """
+        stmt = """
         SELECT 
             column_name as column,
             data_type as type,
@@ -170,11 +177,12 @@ def generate_query(query_type, query_data=None):
         FROM 
             information_schema.columns
         WHERE 
-            table_catalog='{db}' AND 
-            table_schema='{schm}' AND 
-            table_name='{tbl}'
+            table_catalog = :db AND 
+            table_schema = :schm AND 
+            table_name = :tbl
         ORDER BY ordinal_position ASC
-        """.format(**query_data)
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
     elif query_type == 'table_sequences':
@@ -190,15 +198,16 @@ def generate_query(query_type, query_data=None):
     
     elif query_type == 'existing_tables':
         # selects both tables and views
-#            q0 = "SELECT table_name FROM information_schema.tables WHERE table_schema='{schm}' \
+#            q0 = "SELECT table_name FROM information_schema.tables WHERE table_schema= :schm \
 #ORDER BY table_name ASC".format(**query_data)
         # selects only tables
-        q0 = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname='{schm}' \
+        stmt = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname= :schm \
 ORDER BY tablename ASC".format(**query_data)
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
 
     elif query_type == 'foreign_key_relation':
-        q0 = """
+        stmt = """
         SELECT 
             conname, 
             confrelid::regclass AS "referenced_table",
@@ -208,12 +217,13 @@ ORDER BY tablename ASC".format(**query_data)
             pg_constraint 
         WHERE 
             contype = 'f' 
-            AND conrelid::regclass = '{tbl}'::regclass
+            AND conrelid::regclass =  :tbl::regclass
             AND connamespace = (
                 SELECT oid 
                 FROM pg_namespace 
-                WHERE nspname='{schm}') 
-        """.format(**query_data)
+                WHERE nspname= :schm) 
+        """
+        q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
     
