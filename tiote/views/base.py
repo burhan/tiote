@@ -47,7 +47,7 @@ class BareTableView(View):
         self._init_vars(request)
         
         if self.tbl_data['count'] < 1:
-            return HttpResponse('<div class="undefined">[%s]</div>' % self.empty_err_msg)
+            return '<div class="undefined">[%s]</div>' % self.empty_err_msg
 
         # build table properties
         if not hasattr(self, 'tbl_attribs'): self.tbl_attribs = {}

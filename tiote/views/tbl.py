@@ -65,7 +65,7 @@ def cols_struct(request):
     # table view
     tbl_cols = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
     return base_struct(request, tbl_data=tbl_cols, show_tbl_optns=False, 
-        subv='cols', empty_err_msg="Table contains no indexes")
+        subv='cols', empty_err_msg="Table contains no columns")
 
 
 def idxs_struct(request):
@@ -77,7 +77,7 @@ def idxs_struct(request):
     # view and creation things
     tbl_idxs = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
     return base_struct(request, tbl_data=tbl_idxs, show_tbl_optns=False, 
-        subv='idxs', empty_err_msg="Table contains no columns")
+        subv='idxs', empty_err_msg="Table contains no indexes")
 
 
 def insert(request):
