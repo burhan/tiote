@@ -241,11 +241,19 @@ ORDER BY table_name ASC"
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
-    elif query_type == 'drop_seq':
+    elif query_type == 'drop_sequence':
         queries = []
         for where in query_data['conditions']:
             where['name'] = where['name'].replace("'", "")
             queries.append( "DROP SEQUENCE {schm}.{name}".format(schm=query_data['schm'], **where))
         return tuple(queries)
-    
+
+    elif query_type == 'reset_sequence':
+        queries = []
+        for where in query_data['conditions']:
+            where['name'] = where['name'].replace("'", "")
+            queries.append( "ALTER SEQUENCE {schm}.{name} RESTART".format(
+                schm=query_data['schm'], **where )
+            )
+        return tuple(queries)
     

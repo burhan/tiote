@@ -16,7 +16,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
         'drop_table', 'empty_table', 'delete_row', 'create_column', 'delete_column',
-        'drop_db', 'drop_seq',)
+        'drop_db', 'drop_sequence', 'reset_sequence',)
     
     if query_type in no_return_queries:
         conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']

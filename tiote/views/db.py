@@ -41,12 +41,11 @@ def tbl_overview(request):
         # format the where_stmt to a mapping of columns to values (a dict)
         l = request.POST.get('where_stmt').strip().split(';')
         conditions = fns.get_conditions(l)
-        q = ''
-        if request.GET.get('upd8') == 'drop':
-            q = 'drop_table'
-        elif request.GET.get('upd8') == 'empty':
-            q = 'empty_table'
-        query_data = {'db':request.GET['db'],'conditions':conditions}
+        # determine query to run
+        if request.GET.get('upd8') == 'drop': q = 'drop_table'
+        elif request.GET.get('upd8') == 'empty': q = 'empty_table'
+        # run queries and return response
+        query_data = {'db':request.GET['db'], 'conditions':conditions}
         if request.GET.get('schm'):
             query_data['schm'] = request.GET.get('schm')
         h = qry.rpr_query(conn_params, q , query_data)
@@ -79,11 +78,11 @@ def seq_overview(request):
         # format the where_stmt to a mapping of columns to values (a dict)
         l = request.POST.get('where_stmt').strip().split(';')
         conditions = fns.get_conditions(l)
-        q = ''
-        if request.GET.get('upd8') == 'drop': q = 'drop_seq'
-        elif request.GET.get('upd8') == 'reset': q = 'reset_seq'
+        # determine query to run
+        if request.GET.get('upd8') == 'drop': q = 'drop_sequence'
+        elif request.GET.get('upd8') == 'reset': q = 'reset_sequence'
         # run queries and return responses
-        query_data = {'db':request.GET['db'],'conditions':conditions}
+        query_data = {'db':request.GET['db'], 'conditions':conditions}
         if request.GET.get('schm'):
             query_data['schm'] = request.GET.get('schm')
         h = qry.rpr_query(conn_params, q , query_data)
