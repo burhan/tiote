@@ -274,37 +274,37 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 				window.addEvent('resize', resize_sidebar);
 				window.fireEvent('resize'); // fire immediately to call resize handler
 				// handle events
-				if ($('db_select')) {
-					$('db_select').addEvent('change', function(e){
-						if (e.target.value != page_hash()['db']) {
-							var context = {'sctn':'db','v':'overview', 'db': e.target.value};
-							if (Object.keys(page_hash()).contains('schm'))
-								context['schm'] = 'public';
-							redirectPage(context);
-						}
-					});
-				}
-				if ($('schema_select')) {
-					$('schema_select').addEvent('change', function(e){
-						if (e.target.value != page_hash()['schm']) {
-							var context = {'sctn':'db','v':'overview',
-								'db': page_hash()['db'], 'schm': e.target.value
-							}
-							redirectPage(context);
-						}
-					});
-				}
+				var _o = page_hash();
+				// makes the select elements in the sidebar redirect to a new and appropriate view
+				// when its value is changed. the new view depends on the final value of the select element
+				$('sidebar').getElements('#db_select, #schema_select').addEvent('change', function(e){
+					var sp_case = e.target.id == 'db_select' ? 'db': 'schm'; //special_case is the only
+																			 // key that changes
+					if (e.target.value != _o[sp_case]) {
+						var context = Object.merge(page_hash(), {'sctn': 'db', 'v': 'ov'});
+						context[sp_case] = e.target.value;
+						location.hash = '#' + Object.toQueryString(context);
+					}
+				});
 				// highlights the link corresponding to the current view in the sidebar
 				//  in cases where the sidebar wasn't refreshed
-				if ($('sidebar').getChildren('ul a')) {
-					$$('#sidebar ul a').each(function(lnk){
-						lnk.addEvent('click', function(e){
-							$$('#sidebar ul li').removeClass('active');
-							lnk.getParent().addClass('active');
-						});
-					});
-				}
-				}
+				$$('#sidebar ul a').addEvent('click', function(e){
+					$$('#sidebar ul li').removeClass('active');
+					e.target.getParent().addClass('active');
+				});
+				// provide sidebar navigation which keeps the view information of the last page
+				// i.e. other keys of the location.hash is kept besides the special cases
+				$('sidebar').getElements('.schm-link, .tbl-link').addEvent('click', function(e){
+					e.stop(); // stops default behaviour: navigation
+					var sp_case = e.target.hasClass('schm-link') ? 'schm': 'tbl'; //special_case is the only
+																				  // key that changes
+					var context = page_hash()
+					context[sp_case] = e.target.get('text');
+					if (context[sp_case] != _o[sp_case]) {
+						location.hash = '#' + Object.toQueryString(context);
+					}
+				});
+			}
 		}).send();
 	}
 	window.addEvent('resize', resize_sidebar);

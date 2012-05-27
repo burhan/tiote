@@ -64,31 +64,6 @@ def stored_query(query_type):
             datname not like \'%template%\' 
         """,
     
-    'tbl_seqs':
-    # reasons why its this long:
-    # netval gives the minimum_value for a new sequence(have never been consumed).
-    # on reseting the value of the sequence to its previous the case above results in an error
-    # so this long query circumvents that error by adding a CASE construct
-        """
-        WITH temp_seqs_tbl AS (
-            SELECT sequence_name,
-            start_value, minimum_value, increment, maximum_value, 
-            nextval(sequence_name::text)
-            FROM information_schema.sequences
-        )
-        SELECT 
-            sequence_name AS name, 
-            start_value, minimum_value, increment, maximum_value, 
-            CASE 
-                WHEN nextval::bigint=minimum_value::bigint THEN
-                    setval(sequence_name::text, minimum_value::bigint, false)
-                WHEN nextval::bigint<>minimum_value::bigint THEN
-                    setval(sequence_name::text, lastval() - 1, true)
-            END
-        FROM
-            temp_seqs_tbl
-        """,
-    
     }
     
     return queries_db[query_type]
@@ -241,6 +216,39 @@ ORDER BY table_name ASC"
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
+    elif query_type == 'seqs_rpr':
+    # very ugly query and sometimes take long to run.
+    # it increments every sequence and decrements to get the current value
+    # reasons why its this long:
+    # netval gives the minimum_value for a new sequence(have never been consumed).
+    # on reseting the value of the sequence to its previous the case above results in an error
+    # so this long query circumvents that error by adding a CASE construct
+        stmt = """
+        WITH temp_seqs_tbl AS (
+            SELECT
+                sequence_name,
+                start_value, minimum_value, increment, maximum_value, 
+                nextval(sequence_name::text)
+            FROM 
+                information_schema.sequences
+            WHERE 
+                sequence_schema = :schm
+        )
+        SELECT 
+            sequence_name AS name, 
+            start_value, minimum_value, increment, maximum_value, 
+            CASE 
+                WHEN nextval::bigint=minimum_value::bigint THEN
+                    setval(sequence_name::text, minimum_value::bigint, false)
+                WHEN nextval::bigint<>minimum_value::bigint THEN
+                    setval(sequence_name::text, lastval() - 1, true)
+            END
+        FROM
+            temp_seqs_tbl
+        """
+        q0 = text(stmt, bindparams=bindparams)
+        return (q0, )
+
     elif query_type == 'drop_sequence':
         queries = []
         for where in query_data['conditions']:

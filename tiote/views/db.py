@@ -89,7 +89,7 @@ def seq_overview(request):
         return h
 
     # view things
-    tbl_seqs = qry.common_query(conn_params, 'tbl_seqs', request.GET)
+    tbl_seqs = qry.rpr_query(conn_params, 'seqs_rpr', request.GET)
     tbl_seqs['columns'][-1] = 'current_value' # the implemented queries last column is 'case'
 
     return base_overview(request, tbl_data=tbl_seqs, subv='seqs', show_tbl_optns=True,

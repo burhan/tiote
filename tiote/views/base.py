@@ -66,7 +66,7 @@ class BareTableView(View):
             **kwargs
             )
 
-        if hasattr(self, 'show_tbl_optns'):
+        if hasattr(self, 'show_tbl_optns') and getattr(self, 'show_tbl_optns', False):
             tbl_optns_html = htm.table_options(
                 getattr(self, 'tbl_optn_type', 'data'),
                 with_keys = self.tbl_props.has_key('keys')

@@ -62,7 +62,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         return r
         
 
-    elif query_type in ('table_rpr', 'table_structure', 'raw_table_structure', ):
+    elif query_type in ('table_rpr', 'table_structure', 'raw_table_structure', 'seqs_rpr'):
         conn_params['db'] = get_data['db']
         sub_q_data = {'db': get_data['db'],}
         if get_data.has_key('tbl'):
@@ -182,7 +182,7 @@ def common_query(conn_params, query_name, get_data={}):
     get_data is a django QueryDict structure
     '''
     pgsql_redundant_queries = ('template_list', 'group_list', 'user_list', 'db_list',
-        'schema_list', 'db_rpr', 'tbl_seqs', )
+        'schema_list', 'db_rpr', )
     mysql_redundant_queries = ('db_list','charset_list', 'supported_engines', 'db_rpr',)
 
     if conn_params['dialect'] == 'postgresql' and query_name in pgsql_redundant_queries :

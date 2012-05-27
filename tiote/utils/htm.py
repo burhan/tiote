@@ -93,9 +93,7 @@ def generate_sidebar(request):
         schema_list = qry.common_query(conn_params, 'schema_list', request.GET)['rows']
         _list = []
         for schm_row in schema_list:
-            a = '<a class="icon-schema" href="#sctn=db&v=ov&db={0}&schm={1}">{1}</a>'.format(
-                    _dict['db'], schm_row[0]
-                )
+            a = '<a class="icon-schema schm-link" href="#">%s</a>' % schm_row[0]
             # decide selected schema link
             li_pfx = " class='active'" if request.GET.get('schm', sa.get_default_schema(request) ) == schm_row[0] else ''
             # append whole li element
@@ -131,9 +129,7 @@ def generate_sidebar(request):
         for tbl_row in table_list:
             # decide selected table
             li_pfx = " class='active'" if request.GET.get('tbl') == tbl_row[0] else ''
-            a = '<a class="icon-table" href="#sctn=tbl&v=browse&db={0}{1}&tbl={2}">{2}</a>'.format(
-                    _dict['db'], pg_sfx, tbl_row[0]
-                )
+            a = '<a class="icon-table tbl-link" href="#">%s</a>' % tbl_row[0]
             sfx_list.append("<li{0}>{1}</li>".format(li_pfx, a))
             
         # generate the string to be returned. It has the following order

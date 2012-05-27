@@ -62,5 +62,8 @@ In the ``urls.py`` of your project, add a url mapping for the tiote application 
 
 Open link ``<your_project>/<custom_url_map>`` to begin using tiote. Where ``<your_project>`` is the top level of your django project and ``<custom_url_map>`` is the url mapping for the application
 
+Upgrade
+=======
+After any upgrade, remember to update the static files since they are usually set once. So if the django static_app is used, after updating the source files run ``python manage.py runserver``
 
 .. _managing static files: https://docs.djangoproject.com/en/dev/howto/static-files.html
