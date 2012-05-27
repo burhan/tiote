@@ -86,6 +86,7 @@ def seq_overview(request):
     }
 
     return base_overview(request, tbl_data=tbl_seqs, tbl_props=properties, subv='seqs',
+        tbl_assoc_order=[0, 1, -1, 2, 3, 4],
         empty_err_msg="This schema contains no sequences")
 
 

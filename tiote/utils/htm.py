@@ -164,9 +164,12 @@ def generate_sidebar(request):
 class HtmlTable():
     '''
     creates a html table from the given arguments
-        - properties - a dict of table attributes
-        - columns - an iterable containing the table heads
-        - rows - and iterable containing some iterables
+        - properties: a dict of table attributes
+        - columns: an iterable containing the table heads
+        - rows: and iterable containing some iterables
+        - assoc_order: a list of numbers that specifies the order with which the columns and rows
+                        and the rows should be ordered.
+                        It could also be used to include and skip some rows and columns
 
     structure of return string (html)
 
@@ -180,7 +183,7 @@ class HtmlTable():
     </div>
     '''
 
-    def __init__(self, columns=[], rows=[], attribs={}, props={}, store={}, static_addr = "", **kwargs):
+    def __init__(self, columns=[], rows=[], attribs={}, props={}, store={}, assoc_order=None, static_addr = "", **kwargs):
         self.props = props
         self.tbody_chldrn = []
         # build attributes
@@ -197,8 +200,14 @@ class HtmlTable():
         if columns is not None:
             self.columns = columns
             hd_list = ["<td class='controls'><div></div></td>"]
-            for head in columns:
-                hd_list.append('<td><div>'+head+'</div></td>')
+            if assoc_order is not None:
+                self.assoc_order = assoc_order
+                # re arrange the order of columns
+                for _i in assoc_order:
+                    hd_list.append('<td><div>%s</div></td>' % columns[_i])
+            else:
+                for head in columns:
+                    hd_list.append('<td><div>%s</div></td>' % head)
             # empty td 
             hd_list.append('<td class="last-td"></td>')
             self.thead_chldrn = hd_list
@@ -259,7 +268,8 @@ class HtmlTable():
             )
         row_list.append(tida)
 
-        for i in range(len(row)):
+        _it = self.assoc_order if getattr(self, 'assoc_order', False) else range(len(row)) #
+        for i in _it:
             row_i = unicode(row[i])
             if len(row_i) > 40 and hasattr(self, 'keys_column') and not self.keys_column.count(self.columns[i]):
                 # trims the content until its off lenght 40 and adds a continuation placeholder

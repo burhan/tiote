@@ -50,10 +50,7 @@ class BareTableView(View):
             return '<div class="undefined">[%s]</div>' % self.empty_err_msg
 
         # build table properties
-        if not hasattr(self, 'tbl_attribs'): self.tbl_attribs = {}
         if not hasattr(self, 'tbl_props'): self.tbl_props = {}
-        if not hasattr(self, 'tbl_store'): self.tbl_store = {}
-        if not hasattr(self, 'show_tbl_optns'): self.show_tbl_optns = False
         if self.tbl_data.has_key('keys'):
             self.tbl_props['keys'] = self.tbl_data['keys']['rows']
         self.tbl_props['count'] = self.tbl_data['count'],
@@ -63,12 +60,13 @@ class BareTableView(View):
             columns = self.tbl_data['columns'],
             rows = self.tbl_data['rows'],
             props = self.tbl_props,
-            attribs = self.tbl_attribs,
-            store = self.tbl_store,
+            attribs = getattr(self, 'tbl_attribs', {}),
+            store = getattr(self, 'tbl_store',{}),
+            assoc_order = getattr(self, 'tbl_assoc_order', None),
             **kwargs
             )
 
-        if self.show_tbl_optns:
+        if hasattr(self, 'show_tbl_optns'):
             tbl_optns_html = htm.table_options(
                 getattr(self, 'tbl_optn_type', 'data'),
                 with_keys = self.tbl_props.has_key('keys')
