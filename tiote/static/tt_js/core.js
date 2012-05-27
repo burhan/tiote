@@ -262,51 +262,52 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 	if (!clear_sidebar)
 		clear_sidebar = canUpdateSidebar(navObj, oldNavObj);
 	
-	if (clear_sidebar) {
-		var x = new XHR({
-			url : generate_ajax_url() + '&q=sidebar&type=repr',
-			method: 'get',
-			onSuccess: function(text,xml){
-				// if the sidebar contains elements destroy them
-				if ($('sidebar').getChildren())
-					$('sidebar').getChildren().destroy();
-				$('sidebar').set('html', text);
-				window.addEvent('resize', resize_sidebar);
-				window.fireEvent('resize'); // fire immediately to call resize handler
-				// handle events
-				var _o = page_hash();
-				// makes the select elements in the sidebar redirect to a new and appropriate view
-				// when its value is changed. the new view depends on the final value of the select element
-				$('sidebar').getElements('#db_select, #schema_select').addEvent('change', function(e){
-					var sp_case = e.target.id == 'db_select' ? 'db': 'schm'; //special_case is the only
-																			 // key that changes
-					if (e.target.value != _o[sp_case]) {
-						var context = Object.merge(page_hash(), {'sctn': 'db', 'v': 'ov'});
-						context[sp_case] = e.target.value;
-						location.hash = '#' + Object.toQueryString(context);
-					}
-				});
-				// highlights the link corresponding to the current view in the sidebar
-				//  in cases where the sidebar wasn't refreshed
-				$$('#sidebar ul a').addEvent('click', function(e){
-					$$('#sidebar ul li').removeClass('active');
-					e.target.getParent().addClass('active');
-				});
-				// provide sidebar navigation which keeps the view information of the last page
-				// i.e. other keys of the location.hash is kept besides the special cases
-				$('sidebar').getElements('.schm-link, .tbl-link').addEvent('click', function(e){
-					e.stop(); // stops default behaviour: navigation
-					var sp_case = e.target.hasClass('schm-link') ? 'schm': 'tbl'; //special_case is the only
-																				  // key that changes
-					var context = page_hash()
-					context[sp_case] = e.target.get('text');
-					if (context[sp_case] != _o[sp_case]) {
-						location.hash = '#' + Object.toQueryString(context);
-					}
-				});
-			}
-		}).send();
-	}
+	if (clear_sidebar != true) return;
+	
+	new XHR({
+		url : generate_ajax_url() + '&q=sidebar&type=repr',
+		method: 'get',
+		onSuccess: function(text,xml){
+			// if the sidebar contains elements destroy them
+			if ($('sidebar').getChildren())
+				$('sidebar').getChildren().destroy();
+			$('sidebar').set('html', text);
+			window.addEvent('resize', resize_sidebar);
+			window.fireEvent('resize'); // fire immediately to call resize handler
+			// handle events
+			var _o = page_hash();
+			// makes the select elements in the sidebar redirect to a new and appropriate view
+			// when its value is changed. the new view depends on the final value of the select element
+			$('sidebar').getElements('#db_select, #schema_select').addEvent('change', function(e){
+				var sp_case = e.target.id == 'db_select' ? 'db': 'schm'; //special_case is the only
+																			// key that changes
+				if (e.target.value != _o[sp_case]) {
+					var context = Object.merge(page_hash(), {'sctn': 'db', 'v': 'ov'});
+					context[sp_case] = e.target.value;
+					location.hash = '#' + Object.toQueryString(context);
+				}
+			});
+			// highlights the link corresponding to the current view in the sidebar
+			//  in cases where the sidebar wasn't refreshed
+			$$('#sidebar ul a').addEvent('click', function(e){
+				$$('#sidebar ul li').removeClass('active');
+				e.target.getParent().addClass('active');
+			});
+			// provide sidebar navigation which keeps the view information of the last page
+			// i.e. other keys of the location.hash is kept besides the special cases
+			$('sidebar').getElements('.schm-link, .tbl-link').addEvent('click', function(e){
+				e.stop(); // stops default behaviour: navigation
+				var sp_case = e.target.hasClass('schm-link') ? 'schm': 'tbl'; //special_case is the only
+																				// key that changes
+				var context = page_hash()
+				context[sp_case] = e.target.get('text');
+				if (context[sp_case] != _o[sp_case]) {
+					location.hash = '#' + Object.toQueryString(context);
+				}
+			});
+		}
+	}).send();
+		
 	window.addEvent('resize', resize_sidebar);
 	window.fireEvent('resize'); // fire immediately to call resize handler
 }
@@ -314,119 +315,116 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 
 Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 	// display
-	if ($$('.jsifyTable').length) {
-		$$('.jsifyTable').each(function(cont, cont_in) {
-//			console.log('cont #' + cont_in);
-			// auto update height
-			syncHeightWithWindow = syncHeightWithWindow || false;
-			if (syncHeightWithWindow) {
-				window.addEvent('resize', function() {
-					if ($E('.tbl-body table', cont) != null) {
-						var t = $E('.tbl-body table', cont);
-						if (t.getScrollSize().y > (getHeight() - 110)) {
-							t.setStyle('height', (getHeight() - 110));
-						} else {
-							t.setStyle('height', null);
-						}
-					}
-				});
-				window.fireEvent('resize');
-			}
-			if (cont.getElements('.tbl-body table tr').length) {
-				// same size body and header
-				var tds = cont.getElements('.tbl-body table tr')[0].getElements('td');
-				var ths = cont.getElements('.tbl-header table tr')[0].getElements('td');
-	
-				for (var i = 0; i < ths.length - 1; ++i) {
-					var width;
-					if (ths[i].getDimensions().x > tds[i].getDimensions().x) {
-						width = ths[i].getDimensions().x + 10;
-						tds[i].setStyles({'min-width':width, 'width': width});
-						width = tds[i].getDimensions().x - 1; // -1 for border
-						ths[i].setStyles({'min-width': width, 'width': width});
+	$$('.jsifyTable').each(function(cont, cont_in) {
+//		console.log('cont #' + cont_in);
+		// auto update height
+		syncHeightWithWindow = syncHeightWithWindow || false;
+		if (syncHeightWithWindow) {
+			window.addEvent('resize', function() {
+				if ($E('.tbl-body table', cont) != null) {
+					var t = $E('.tbl-body table', cont);
+					if (t.getScrollSize().y > (getHeight() - 110)) {
+						t.setStyle('height', (getHeight() - 110));
 					} else {
-						width = tds[i].getDimensions().x - 1; // -1 for border
-						ths[i].setStyles({'min-width': width, 'width': width});
+						t.setStyle('height', null);
 					}
-				}
-				tds = null, ths = null;
-			}
-
-			if (cont.getElement('.tbl-body table') != undefined
-				&& cont.getElement('.tbl-header table') != undefined) {
-				// variables needed
-				var tblhead_tbl = cont.getElement('.tbl-header table');
-				var tblbody_tbl = cont.getElement('.tbl-body table');
-				// sync scrolling 
-				tblbody_tbl.addEvent('scroll', function(e){
-					var scrl = tblbody_tbl.getScroll();
-					cont.getElement('.tbl-header table').scrollTo(scrl.x, scrl.y);
-				});
-				// add the width of scrollbar to min-width property of ".tbl-header td.last-td"
-				var w = tblbody_tbl.getScrollSize().x - tblhead_tbl.getScrollSize().x;
-				w = w + 25 + 7;
-				tblhead_tbl.getElement('td.last-td').setStyle('min-width', w);	
-			}
-		});
-	}
-	// behaviour
-	if ($$('table.sql') != null ) {
-		$$('table.sql').each(function(tbl, tbl_in){
-			pg.tbls.include(new HtmlTable($(tbl)));
-			make_checkable(pg.tbls[tbl_in]);
-			// attach the variables passed down as javascript objects to the 
-			// table object
-			pg.tbls[tbl_in]['vars'] = {}; var data;// containers
-			if ($(pg.tbls[tbl_in]).get('data')) {
-				data = {}
-				$(pg.tbls[tbl_in]).get('data').split(';').each(function(d){
-					var ar = d.split(':');
-					data[ar[0]] = ar[1];
-				});
-				pg.tbls[tbl_in]['vars']['data'] = data; // schema: [key: value]
-			}
-			if ($(pg.tbls[tbl_in]).get('keys')) {
-				data = []; // data[[1,2,3],...] indexes 1: name of column,
-							   // 2 : index type
-						       // 3 : column position in tr
-				$(pg.tbls[tbl_in]).get('keys').split(';').each(function(d){
-					var ar = d.split(':');
-					if (ar[0] != "") data.include(ar);
-				});
-				// loop through the tds int .tbl-header to see which corresponds to the keys
-				$$('.tbl-header table')[tbl_in].getElements('td').each(function(th, th_in){
-					for (var i = 0; i < data.length; i++) {
-						if ($(th).get('text') == data[i][0] )
-							data[i].include(th_in);
-					}
-				});
-				
-				pg.tbls[tbl_in]['vars']['keys'] = data; // schema: [column, key_type, column index]
-			}
-			
-			// handle a.display_row(s) click events
-			$(tbl).getElements('a.display_row').each(function(al, al_in){
-				if ($(tbl).get('keys' != null)) {	// functionality requires keys
-					// attach click event
-					al.addEvent('click', function(e) {
-						var where_stmt = generate_where(pg.tbls[tbl_in], al_in, true);
-						// make xhr request
-						var x = new XHR({
-							url: generate_ajax_url() + '&q=get_row&type=fn',
-							spinnerTarget: tbl,
-							onSuccess : function(text, xml) {
-								showDialog("Entry", text, {
-									offsetTop: null, width: 475, hideFooter: true,
-									overlayOpacity: 0, overlayClick: false
-								});
-							}
-						}).post(where_stmt);
-					});
 				}
 			});
+			window.fireEvent('resize');
+		}
+		if (cont.getElements('.tbl-body table tr').length) {
+			// same size body and header
+			var tds = cont.getElements('.tbl-body table tr')[0].getElements('td');
+			var ths = cont.getElements('.tbl-header table tr')[0].getElements('td');
+
+			for (var i = 0; i < ths.length - 1; ++i) {
+				var width;
+				if (ths[i].getDimensions().x > tds[i].getDimensions().x) {
+					width = ths[i].getDimensions().x + 10;
+					tds[i].setStyles({'min-width':width, 'width': width});
+					width = tds[i].getDimensions().x - 1; // -1 for border
+					ths[i].setStyles({'min-width': width, 'width': width});
+				} else {
+					width = tds[i].getDimensions().x - 1; // -1 for border
+					ths[i].setStyles({'min-width': width, 'width': width});
+				}
+			}
+			tds = null, ths = null;
+		}
+
+		if (cont.getElement('.tbl-body table') != undefined
+			&& cont.getElement('.tbl-header table') != undefined) {
+			// variables needed
+			var tblhead_tbl = cont.getElement('.tbl-header table');
+			var tblbody_tbl = cont.getElement('.tbl-body table');
+			// sync scrolling 
+			tblbody_tbl.addEvent('scroll', function(e){
+				var scrl = tblbody_tbl.getScroll();
+				cont.getElement('.tbl-header table').scrollTo(scrl.x, scrl.y);
+			});
+			// add the width of scrollbar to min-width property of ".tbl-header td.last-td"
+			var w = tblbody_tbl.getScrollSize().x - tblhead_tbl.getScrollSize().x;
+			w = w + 25 + 7;
+			tblhead_tbl.getElement('td.last-td').setStyle('min-width', w);	
+		}
+	});
+	
+	// behaviour
+	$$('table.sql').each(function(tbl, tbl_in){
+		pg.tbls.include(new HtmlTable($(tbl)));
+		make_checkable(pg.tbls[tbl_in]);
+		// attach the variables passed down as javascript objects to the 
+		// table object
+		pg.tbls[tbl_in]['vars'] = {}; var data;// containers
+		if ($(pg.tbls[tbl_in]).get('data')) {
+			data = {}
+			$(pg.tbls[tbl_in]).get('data').split(';').each(function(d){
+				var ar = d.split(':');
+				data[ar[0]] = ar[1];
+			});
+			pg.tbls[tbl_in]['vars']['data'] = data; // schema: [key: value]
+		}
+		if ($(pg.tbls[tbl_in]).get('keys')) {
+			data = []; // data[[1,2,3],...] indexes 1: name of column,
+							// 2 : index type
+							// 3 : column position in tr
+			$(pg.tbls[tbl_in]).get('keys').split(';').each(function(d){
+				var ar = d.split(':');
+				if (ar[0] != "") data.include(ar);
+			});
+			// loop through the tds int .tbl-header to see which corresponds to the keys
+			$$('.tbl-header table')[tbl_in].getElements('td').each(function(th, th_in){
+				for (var i = 0; i < data.length; i++) {
+					if ($(th).get('text') == data[i][0] )
+						data[i].include(th_in);
+				}
+			});
+
+			pg.tbls[tbl_in]['vars']['keys'] = data; // schema: [column, key_type, column index]
+		}
+
+		// handle a.display_row(s) click events
+		$(tbl).getElements('a.display_row').each(function(al, al_in){
+			if ($(tbl).get('keys' != null)) {	// functionality requires keys
+				// attach click event
+				al.addEvent('click', function(e) {
+					var where_stmt = generate_where(pg.tbls[tbl_in], al_in, true);
+					// make xhr request
+					new XHR({
+						url: generate_ajax_url() + '&q=get_row&type=fn',
+						spinnerTarget: tbl,
+						onSuccess : function(text, xml) {
+							showDialog("Entry", text, {
+								offsetTop: null, width: 475, hideFooter: true,
+								overlayOpacity: 0, overlayClick: false
+							});
+						}
+					}).post(where_stmt);
+				});
+			}
 		});
+	});
 		
-	}
 }
 
 
@@ -436,15 +434,13 @@ Page.prototype.addTableOpts = function() {
 		$$('.table-options').each(function(tbl_opt, opt_in){
 			htm_tbl = pg.tbls[opt_in]; // short and understandable alias
 			// enable selection of rows
-			$(tbl_opt).getElements('a.selector').each(function(a_sel) {
-				a_sel.addEvent('click', function() {
-					// loop through all the classes to find the "select_" class
-					a_sel.get('class').split(' ').each(function(cl){
-						if (cl.contains('select_')) {
-							var option = cl.replace('select_', '').toLowerCase();
-							set_all_tr_state(htm_tbl, (option == 'all') ? true : false);
-						}
-					});
+			$(tbl_opt).getElements('a.selector').addEvent('click', function() {	
+				// loop through all the classes to find the "select_" class
+				e.target.get('class').split(' ').each(function(cl){
+					if (cl.contains('select_')) {
+						var option = cl.replace('select_', '').toLowerCase();
+						set_all_tr_state(htm_tbl, (option == 'all') ? true : false);
+					}
 				});
 			});
 			
@@ -458,17 +454,15 @@ Page.prototype.addTableOpts = function() {
 				$(tbl_opt).getElement('p').adopt(pg_htm);
 			}
 			
-			
-			// links that do something (edit, delete ...)
-			$ES('a.doer', tbl_opt).each(function(doer){
-				doer.addEvent('click', function(e) {
-					if (doer.hasClass('action_refresh'))
-						// action to be performed is a page refresh
-						pg.loadPage(false)
-					else 
-						do_action(htm_tbl, e);
-				});
 
+			// links that do something (edit, delete ...)
+			tbl_opt.getElements('a.doer').addEvent('click', function(e){
+				e.stop();
+				if (e.target.hasClass('action_refresh'))
+					// action to be performed is a page refresh
+					pg.loadPage(false)
+				else 
+					do_action(htm_tbl, e);
 			});
 			
 			// disable or enable if no row is selected or rows are selected respectively.
@@ -649,8 +643,8 @@ Page.prototype.completeForm = function(){
 		
 		//attach validation object
 		var form_validator = new Form.Validator.Inline(form, {
-			'evaluateFieldsOnBlur':false, 'evaluateFieldsOnChange': false}
-		);
+			'evaluateFieldsOnBlur':false, 'evaluateFieldsOnChange': false
+		});
 		// handle submission immediately after validation
 		form_validator.addEvent('formValidate', function(status, form, e){
 			if (!status) return; // form didn't validate
