@@ -3,6 +3,10 @@
 Changelog
 =========
 
+0.2.3 : *May 27, 2012*
+----------------------
+Viewing, droping and reseting sequences. All under database overview
+
 0.2.2 : *May 24, 2012*
 ----------------------
 performance optimisations
