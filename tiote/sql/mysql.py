@@ -173,7 +173,7 @@ def generate_query(query_type, query_data=None):
         SELECT 
             column_name AS "column", 
             column_type AS "type", 
-            is_nullable AS "null",
+            is_nullable AS "nullable",
             column_default AS "default",
             extra 
         FROM
@@ -191,7 +191,7 @@ def generate_query(query_type, query_data=None):
         SELECT 
             column_name AS "column", 
             data_type AS "type", 
-            is_nullable AS "null", 
+            is_nullable AS "nullable", 
             column_default AS "default", 
             character_maximum_length, 
             numeric_precision, numeric_scale, extra, column_type

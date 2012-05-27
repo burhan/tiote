@@ -14,13 +14,17 @@ def base_overview(request, **kwargs):
     conn_params = fns.get_conn_params(request)
 
     # generate href with hash ordered as tiote needs
-    dest_url = SortedDict(); _d = {'sctn':'db','v':'overview'}
+    dest_url = SortedDict(); _d = {'sctn':'db','v':'ov'}
     for k in _d: dest_url[k] = _d[k] # init this way to maintain order
     for k in ('db', 'schm','tbl',): 
         if request.GET.get(k): dest_url[k] = request.GET.get(k)
-
+    # manually filled implementation list
+    d = {
+    'mysql': ('tbls', ),
+    'postgresql': ('tbls', 'seqs',)
+    }
     c = base.CompositeTableView( 
-        subnav_list = ('tbl',),
+        subnav_list = d[ conn_params['dialect'] ],
         url_prfx = urlencode(dest_url),
         **kwargs)
 
@@ -65,9 +69,30 @@ def tbl_overview(request):
         }
 
     return base_overview(request, tbl_data=tbl_data, tbl_props=properties, show_tbl_optns=True,
-        tbl_optn_type='tbl', subv='tbls', empty_err_msg="This database contains no tables")
-    
+        tbl_optn_type='tbl', subv='tbls', empty_err_msg="This schema contains no tables")
+
+
+def seq_overview(request):
+    conn_params = fns.get_conn_params(request)
+
+    if request.method == 'POST':
+        pass
+
+    # view things
+    tbl_seqs = qry.common_query(conn_params, 'tbl_seqs', request.GET)
+    tbl_seqs['columns'][-1] = 'current_value' # the implemented queries last column is 'case'
+    properties = {
+    # 'keys': (('name', 'key'),), 
+    }
+
+    return base_overview(request, tbl_data=tbl_seqs, tbl_props=properties, subv='seqs',
+        empty_err_msg="This schema contains no sequences")
+
 
 def route(request):
-    if request.GET['v'] in ('overview', 'ov'):
+    if request.GET.get('v') in ('overview', 'ov'):
+        if request.GET.get('subv') == 'tbls':
+            return tbl_overview(request)
+        elif request.GET.get('subv') == 'seqs':
+            return seq_overview(request)
         return tbl_overview(request) # default

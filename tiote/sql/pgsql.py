@@ -56,11 +56,37 @@ def stored_query(query_type):
         SELECT 
             datname as name, 
             pg_encoding_to_char(encoding) as encoding,
-            datcollate, datctype 
+            datcollate AS "collation",
+            datctype AS "character type"
         FROM 
             pg_catalog.pg_database 
         WHERE
             datname not like \'%template%\' 
+        """,
+    
+    'tbl_seqs':
+    # reasons why its this long:
+    # netval gives the minimum_value for a new sequence(have never been consumed).
+    # on reseting the value of the sequence to its previous the case above results in an error
+    # so this long query circumvents that error by adding a CASE construct
+        """
+        WITH temp_seqs_tbl AS (
+            SELECT sequence_name,
+            start_value, minimum_value, increment, maximum_value, 
+            nextval(sequence_name::text)
+            FROM information_schema.sequences
+        )
+        SELECT 
+            sequence_name AS name, 
+            start_value, minimum_value, increment, maximum_value, 
+            CASE 
+                WHEN nextval::bigint=minimum_value::bigint THEN
+                    setval(sequence_name::text, minimum_value::bigint, false)
+                WHEN nextval::bigint<>minimum_value::bigint THEN
+                    setval(sequence_name::text, lastval() - 1, true)
+            END
+        FROM
+            temp_seqs_tbl
         """,
     
     }
@@ -169,7 +195,7 @@ def generate_query(query_type, query_data=None):
         SELECT 
             column_name as column,
             data_type as type,
-            is_nullable as null,
+            is_nullable as nullable,
             column_default as default, 
             character_maximum_length, 
             numeric_precision, numeric_scale, datetime_precision,
@@ -185,24 +211,13 @@ def generate_query(query_type, query_data=None):
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
-    elif query_type == 'table_sequences':
-        q0 = """
-        SELECT 
-            sequence_name, 
-            nextval(sequence_name::regclass),
-            setval(sequence_name::regclass, lastval() - 1, true)
-        FROM
-            information_schema.sequences
-        """
-        return (q0, )
-    
     elif query_type == 'existing_tables':
         # selects both tables and views
-#            q0 = "SELECT table_name FROM information_schema.tables WHERE table_schema= :schm \
-#ORDER BY table_name ASC".format(**query_data)
+        stmt = "SELECT table_name FROM information_schema.tables WHERE table_schema= :schm \
+ORDER BY table_name ASC"
         # selects only tables
-        stmt = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname= :schm \
-ORDER BY tablename ASC".format(**query_data)
+#        stmt = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname= :schm \
+#ORDER BY tablename ASC"
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
 

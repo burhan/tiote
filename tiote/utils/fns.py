@@ -7,11 +7,13 @@ from django.template import loader, RequestContext, Template
 _abbr = {
     'sctn': 'section',
     'tbl': 'table',
+    'tbls': 'tables',
     'v': 'view',
     'schm': 'schema',
     'idxs': 'indexes',
     'cols': 'columns',
     'seq': 'sequence',
+    'seqs': 'sequences',
     'q': 'query',
     'ov': 'overview',
     'struct': 'structure',

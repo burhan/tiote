@@ -182,27 +182,28 @@ def common_query(conn_params, query_name, get_data={}):
     get_data is a django QueryDict structure
     '''
     pgsql_redundant_queries = ('template_list', 'group_list', 'user_list', 'db_list',
-        'schema_list', 'db_rpr',)
+        'schema_list', 'db_rpr', 'tbl_seqs', )
     mysql_redundant_queries = ('db_list','charset_list', 'supported_engines', 'db_rpr',)
     
+    # update connection db if it is different from login db
+    conn_params['db'] = get_data.get('db') if get_data.get('db') else conn_params['db']
+
     if conn_params['dialect'] == 'postgresql' and query_name in pgsql_redundant_queries :
-            # this kind of queries require no special attention
-            if query_name == 'schema_list':
-                if hasattr(settings, 'TT_SHOW_SYSTEM_CATALOGS'):
-                    query_name = 'full_schema_list' if settings.TT_SHOW_SYSTEM_CATALOGS == True else "user_schema_list"
-                else: query_name = "user_schema_list" # default
-            
-            conn_params['db'] == get_data.get('db') if get_data.get('db') else conn_params['db']
-            r = sa.full_query(conn_params,
-                sql.stored_query(query_name, conn_params['dialect']))
-#            raise Exception(r)
-            return r
+        # make query changes and mini translations
+        if query_name == 'schema_list':
+            if hasattr(settings, 'TT_SHOW_SYSTEM_CATALOGS'):
+                query_name = 'full_schema_list' if settings.TT_SHOW_SYSTEM_CATALOGS == True else "user_schema_list"
+            else: query_name = "user_schema_list" # default
+
+        r = sa.full_query(conn_params,
+            sql.stored_query(query_name, conn_params['dialect']))
+        # raise Exception(r)
+        return r
                 
-    elif conn_params['dialect'] == 'mysql':
-        if query_name in mysql_redundant_queries :
-            # this kind of queries require no special attention
-            return sa.full_query(conn_params,
-                sql.stored_query(query_name, conn_params['dialect']))
+    elif conn_params['dialect'] == 'mysql' and query_name in mysql_redundant_queries :
+        # this kind of queries require no special attention
+        return sa.full_query(conn_params,
+            sql.stored_query(query_name, conn_params['dialect']))
 
 
 def get_row(conn_params, get_data={}, post_data={}):
