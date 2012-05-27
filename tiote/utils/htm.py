@@ -23,12 +23,10 @@ def table_options(opt_type, with_keys=True, ):
         # actions to be carried out on selected rows
         l.append("<span>With Selected: </span>")
         # action(ctrls) html
-        if opt_type == 'user' or opt_type == 'data': 
-            ctrls = ['edit', 'delete']
-        elif opt_type == 'tbl':
-            ctrls = ['empty', 'drop']
-        elif opt_type == 'db':
-            ctrls = ['drop',]
+        if opt_type == 'user' or opt_type == 'data': ctrls = ('edit', 'delete',)
+        elif opt_type == 'tbl': ctrls = ('empty', 'drop',)
+        elif opt_type == 'db': ctrls = ('drop',)
+        elif opt_type == 'seq': ctrls = ('drop', )
         # build html handles for ctrls
         for ctrl in ctrls:
             l.append('<a class="doer needy_doer action_{0}">{1}</a>'.format(ctrl, ctrl.title()))

@@ -16,7 +16,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
         'drop_table', 'empty_table', 'delete_row', 'create_column', 'delete_column',
-        'drop_db',)
+        'drop_db', 'drop_seq',)
     
     if query_type in no_return_queries:
         conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']
@@ -184,11 +184,10 @@ def common_query(conn_params, query_name, get_data={}):
     pgsql_redundant_queries = ('template_list', 'group_list', 'user_list', 'db_list',
         'schema_list', 'db_rpr', 'tbl_seqs', )
     mysql_redundant_queries = ('db_list','charset_list', 'supported_engines', 'db_rpr',)
-    
-    # update connection db if it is different from login db
-    conn_params['db'] = get_data.get('db') if get_data.get('db') else conn_params['db']
 
     if conn_params['dialect'] == 'postgresql' and query_name in pgsql_redundant_queries :
+        # update connection db if it is different from login db
+        conn_params['db'] = get_data.get('db') if get_data.get('db') else conn_params['db']
         # make query changes and mini translations
         if query_name == 'schema_list':
             if hasattr(settings, 'TT_SHOW_SYSTEM_CATALOGS'):

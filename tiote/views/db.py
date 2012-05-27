@@ -76,16 +76,26 @@ def seq_overview(request):
     conn_params = fns.get_conn_params(request)
 
     if request.method == 'POST':
-        pass
+        # format the where_stmt to a mapping of columns to values (a dict)
+        l = request.POST.get('where_stmt').strip().split(';')
+        conditions = fns.get_conditions(l)
+        q = ''
+        if request.GET.get('upd8') == 'drop': q = 'drop_seq'
+        elif request.GET.get('upd8') == 'reset': q = 'reset_seq'
+        # run queries and return responses
+        query_data = {'db':request.GET['db'],'conditions':conditions}
+        if request.GET.get('schm'):
+            query_data['schm'] = request.GET.get('schm')
+        h = qry.rpr_query(conn_params, q , query_data)
+        return h
 
     # view things
     tbl_seqs = qry.common_query(conn_params, 'tbl_seqs', request.GET)
     tbl_seqs['columns'][-1] = 'current_value' # the implemented queries last column is 'case'
-    properties = {
-    # 'keys': (('name', 'key'),), 
-    }
 
-    return base_overview(request, tbl_data=tbl_seqs, tbl_props=properties, subv='seqs',
+    return base_overview(request, tbl_data=tbl_seqs, subv='seqs', show_tbl_optns=True,
+        tbl_optn_type='seq',
+        tbl_props= {'keys': (('name', 'key'),), },
         tbl_assoc_order=[0, 1, -1, 2, 3, 4],
         empty_err_msg="This schema contains no sequences")
 

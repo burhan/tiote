@@ -532,6 +532,7 @@ function do_action(tbl, e) {
 	else if (e.target.hasClass("action_delete")) action = 'delete';
 	else if (e.target.hasClass("action_drop")) action = "drop";
 	else if (e.target.hasClass("action_empty")) action = "empty";
+	else if (e.target.hasClass("action_reset")) action = "reset";
 	
 	msg += action + " the selected ";
 	var navObject = page_hash();

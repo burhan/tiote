@@ -28,9 +28,7 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
     '''
     
     # init
-    if query_data.has_key('schm'):
-        prfx = "{schm}.".format(**query_data) if dialect =='postgresql' else ""
-    else: prfx = ""
+    prfx = "{schm}.".format(**query_data) if dialect =='postgresql' else ""
 
     #queries
     if query_type == 'get_single_row':
