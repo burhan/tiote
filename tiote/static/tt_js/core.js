@@ -434,7 +434,7 @@ Page.prototype.addTableOpts = function() {
 		$$('.table-options').each(function(tbl_opt, opt_in){
 			htm_tbl = pg.tbls[opt_in]; // short and understandable alias
 			// enable selection of rows
-			$(tbl_opt).getElements('a.selector').addEvent('click', function() {	
+			$(tbl_opt).getElements('a.selector').addEvent('click', function(e) {	
 				// loop through all the classes to find the "select_" class
 				e.target.get('class').split(' ').each(function(cl){
 					if (cl.contains('select_')) {
@@ -530,10 +530,20 @@ function do_action(tbl, e) {
 	
 	msg += action + " the selected ";
 	var navObject = page_hash();
-	if (navObject['sctn'] == "db" && navObject['v'] == 'overview')
-		msg += where_stmt.contains(';') ? "tables" : "table";
+	// update the dialog message to include the specific type of object 
+	// and pluralize if more than one object is to worked upon
+	if (navObject['sctn'] == "db") {
+		if (Object.keys(navObject).contains('subv') && navObject['subv'] == 'seqs')
+			msg += where_stmt.contains(';') ? "sequences" : "sequence";
+		else
+			// default situation. translates to tbl view of section db
+			msg += where_stmt.contains(';') ? "tables" : "table";
+	}
+		
 	else if (navObject['sctn'] == "tbl" && navObject['v'] == 'browse')
 		msg += where_stmt.contains(';') ? "rows" : "row";
+	else if (navObject['sctn'] == 'hm' && navObject['v'] == "dbs")
+		msg += where_stmt.contains(";") ? "databases": "database";
 	// confirm if intention is to be carried out
 	var confirmDiag = new SimpleModal({'btn_ok': 'Yes', overlayClick: false,
 		draggable: true, offsetTop: 0.2 * screen.availHeight
