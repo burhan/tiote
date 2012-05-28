@@ -115,7 +115,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         sub_q_data = {'tbl': get_data['tbl'],'db':get_data['db']}
         sub_q_data['offset'] = get_data['offset'] if get_data.has_key('offset') else 0
         sub_q_data['limit'] = get_data['limit'] if get_data.has_key('limit') else getattr(settings, 'TT_MAX_ROW_COUNT', 100)
-        for item in ['schm', 'sort_key', 'sort_dir']:
+        for item in ('schm', 'sort_key', 'sort_dir',):
             if get_data.has_key(item): sub_q_data[item] = get_data[item]
         # retrieve and run queries
         conn_params['db'] = get_data['db']
@@ -129,7 +129,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         # format and return data
         if type(r) == dict:
             r.update({'total_count': count[0][0], 'offset': sub_q_data['offset'],
-                      'limit':sub_q_data['limit'], 'keys': keys})
+                'limit':sub_q_data['limit'], 'keys': keys})
             return r
         else:
             return fns.http_500(r)
@@ -303,10 +303,6 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
         ret['msg'].replace('  ', '&nbsp;&nbsp;&nbsp;').replace('\n', '<br />')
     )
     return ret
-
-def drop_db(request, get_data):
-    conn_params = fns.get_conn_params(request)
-    sql_stmt = sql.generate_query(conn_params, )
 
 
 def do_login(request, cleaned_data):

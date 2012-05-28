@@ -301,6 +301,13 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 																				// key that changes
 				var context = page_hash()
 				context[sp_case] = e.target.get('text');
+				// removes the keys [sort_key and sort_dir]
+				// they introduce errors in browse view. sorting by columns that don't exist
+				// - when the navigation is changed to another table
+				['sort_key', 'sort_dir'].each(function(_it){ // unwanted keys: manually update
+					if (Object.keys(context).contains(_it))
+						delete context[_it];
+				});
 				if (context[sp_case] != _o[sp_case]) {
 					location.hash = '#' + Object.toQueryString(context);
 				}
