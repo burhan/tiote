@@ -238,9 +238,9 @@ ORDER BY table_name ASC"
             sequence_name AS name, 
             start_value, minimum_value, increment, maximum_value, 
             CASE 
-                WHEN nextval::bigint=minimum_value::bigint THEN
-                    setval(sequence_name::text, minimum_value::bigint, false)
-                WHEN nextval::bigint<>minimum_value::bigint THEN
+                WHEN nextval::bigint=start_value::bigint THEN
+                    setval(sequence_name::text, start_value::bigint, false)
+                WHEN nextval::bigint<>start_value::bigint THEN
                     setval(sequence_name::text, lastval() - 1, true)
             END
         FROM
