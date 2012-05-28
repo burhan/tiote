@@ -18,12 +18,19 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         'drop_table', 'empty_table', 'delete_row', 'create_column', 'delete_column',
         'drop_db', 'drop_sequence', 'reset_sequence',)
     
+    psycopg2_queries = ('drop_db', )
+
+
     if query_type in no_return_queries:
         conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']
         query_data = {}
         query_data.update(get_data, **post_data)
         q = sql.generate_query( query_type, conn_params['dialect'],query_data)
-        result = sa.short_query(conn_params, q)
+        if conn_params['dialect'] == 'postgresql' and query_type in psycopg2_queries:
+            # this queries needs to be run outside a transaction block
+            # SA execute functions runs all its queries inside a transaction block
+            result = sa.execute_outside_transaction(conn_params, q)
+        else: result = sa.short_query(conn_params, q)
         return HttpResponse( json.dumps(result) )
     
     # specific queries with implementations similar to both dialects
@@ -297,6 +304,10 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
     )
     return ret
 
+def drop_db(request, get_data):
+    conn_params = fns.get_conn_params(request)
+    sql_stmt = sql.generate_query(conn_params, )
+
 
 def do_login(request, cleaned_data):
     host = cleaned_data['host']
@@ -341,3 +352,4 @@ def get_home_variables(request):
             return variables
         else:
             return fns.http_500(result)
+

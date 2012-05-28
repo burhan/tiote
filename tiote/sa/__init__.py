@@ -49,20 +49,21 @@ def full_query(conn_params, query):
         conn.close()
         return d
     
-def short_query(conn_params, queries):
+def short_query(conn_params, queries, execution_optns={}):
     """
     executes and returns the success state of the query
     """
     eng = create_engine( get_conn_link(conn_params) )
-    conn = None
     try:
         conn = eng.connect()
+        if len(execution_optns): conn = conn.execution_options(**execution_optns)
         for query in queries:
             query_result = conn.execute(text(query))
     except Exception as e:
         conn.close()
         return {'status':'fail', 'msg': str(e) }
     else:
+        conn.close()
         return {'status':'success', 'msg':''}
     
     
@@ -129,3 +130,30 @@ def transform_args_to_bindparams(argmap):
 def get_default_schema(request):
     _engine = _get_or_set_engine(request)
     return _engine.dialect._get_default_schema_name(_engine.connect())
+
+
+def execute_outside_transaction(conn_params, stmts):
+    '''
+    runs short queries without transactions. SA includes transactions by default for all its
+    execution. This causes issues with some particular queries such as dropping databases.
+    This queries then make use of psycopg2 directly instead of SA's abstractions.
+    '''
+    import psycopg2
+    conn = psycopg2.connect("dbname=%s user=%s password=%s" % 
+        (conn_params['db'], conn_params['username'], conn_params['password'])
+        )
+    conn.autocommit = True # disable transactions
+    # conn.set_isolation
+    cur = conn.cursor()
+    try:
+        for stmt in stmts:
+            cur.execute(stmt)
+    except Exception as e:
+        cur.close()
+        conn.close()
+        return {'status':'fail', 'msg': str(e) }
+    else:
+        cur.close()
+        conn.close()
+        return {'status':'success', 'msg':''}
+

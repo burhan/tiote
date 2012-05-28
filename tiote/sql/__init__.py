@@ -28,8 +28,9 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
     '''
     
     # init
-    prfx = "{schm}.".format(**query_data) if dialect =='postgresql' else ""
-
+    if query_data.has_key('schm'):
+        prfx = "{schm}.".format(**query_data) if dialect =='postgresql' else ""
+    else: prfx = ""
     #queries
     if query_type == 'get_single_row':
         q0 = "SELECT * FROM {0}{tbl} WHERE {where} LIMIT 1".format(prfx, **query_data)
