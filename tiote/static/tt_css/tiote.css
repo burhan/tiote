@@ -270,6 +270,10 @@ table.sql td div.data-entry {
     min-width: 150px;
 }
 
+table.props-table td div.data-entry {
+	max-width: none;
+}
+
 table.sql td.controls div.data-entry {
 	max-width: none;
 	min-width: 0;

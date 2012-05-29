@@ -183,6 +183,8 @@ class HtmlTable():
         # build attributes
         _attribs = {'class':'sql zebra-striped', 'id':'sql_table'}
         _attribs.update(attribs)
+        if props.has_key('props_table') and props['props_table'] == True:
+            _attribs['class'] += ' props-table'
         self.attribs_list = self._build_attribs_list(_attribs)
         self.store_list = self._build_store_list(store)
         # store the keys in the table's markup

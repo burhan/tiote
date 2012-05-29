@@ -20,7 +20,7 @@ def browse(request):
         fns.qd(request.GET), fns.qd(request.POST))
     
     c = base.TableView(tbl_data=tbl_data,
-        tbl_props = {'with_checkboxes': True, 'display_row': True,},
+        tbl_props = {'with_checkboxes': True, 'display_row': True, },
         tbl_store = {'total_count':tbl_data['total_count'], 'offset': tbl_data['offset'],
             'limit': tbl_data['limit'] },
         show_tbl_optns = True,
@@ -46,6 +46,7 @@ def base_struct(request, **kwargs):
     c = base.CompositeTableView(
         url_prfx = url_prefix, 
         subnav_list = subnav_list,
+        tbl_props = {'props_table': True },
         **kwargs)
 
     return c.get(request)
