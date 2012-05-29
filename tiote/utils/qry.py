@@ -364,8 +364,8 @@ def get_dependencies(conn_params, get_data={}): # might later be extended for ob
     columns = ('type', 'name', 'restriction',)
     
     tbl_data_rows = []
-    refname, typestr = '', ''
     for row in totl_deps['rows']:
+        refname, typestr, depstr = '', '', ''
         # get the type of this object described in this row
         # type is the sixth column of this query
         type_ = row[5]
