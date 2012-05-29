@@ -20,7 +20,7 @@ _abbr = {
     'hm': 'home',
     'ins': 'insert',
     'dbs': 'databases',
-    'deps': 'dependencies',
+    'deps': 'dependents',
 }
 
 # returns page templates for each view

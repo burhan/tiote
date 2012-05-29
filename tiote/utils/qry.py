@@ -370,7 +370,7 @@ def get_dependencies(conn_params, get_data={}): # might later be extended for ob
         # type is the sixth column of this query
         type_ = row[5]
         if type_[0] in ('c', 's', 't'):
-            typestr = '' # ununderstood types: handled internally
+            continue # ununderstood types: handled internally
         elif type_[0] == 'i': typestr = 'index'
         elif type_[0] == 'S': typestr = 'sequence'
         elif type_[0] == 'v': typestr = 'view'
