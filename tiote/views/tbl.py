@@ -31,6 +31,7 @@ def browse(request):
 
 
 def base_struct(request, **kwargs):
+    conn_params = fns.get_conn_params(request)
     # get url prefix
     dest_url = SortedDict(); _d = {'sctn':'tbl','v':'struct'}
     for k in _d: dest_url[k] = _d[k] # init this way to maintain order
@@ -39,9 +40,12 @@ def base_struct(request, **kwargs):
 
     url_prefix = urlencode(dest_url)
 
+    subnav_list = ['cols', 'idxs',]
+    if conn_params['dialect'] == 'postgresql': subnav_list.append('deps')
+
     c = base.CompositeTableView(
         url_prfx = url_prefix, 
-        subnav_list = ('cols', 'idxs',),
+        subnav_list = subnav_list,
         **kwargs)
 
     return c.get(request)
@@ -78,6 +82,15 @@ def idxs_struct(request):
     tbl_idxs = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
     return base_struct(request, tbl_data=tbl_idxs, show_tbl_optns=False, 
         subv='idxs', empty_err_msg="Table contains no indexes")
+
+
+def deps_struct(request):
+    conn_params = fns.get_conn_params(request)
+
+    # view and deletion things
+    tbl_deps = qry.get_dependencies(conn_params, fns.qd(request.GET))
+    return base_struct(request, tbl_data=tbl_deps, show_tbl_optns=False,
+        subv='deps', empty_err_msg="This table has no dependents")
 
 
 def insert(request):
@@ -184,6 +197,8 @@ def route(request):
     elif request.GET.get('v') in ('structure', 'struct'):
         if request.GET.get('subv') == 'idxs':
             return idxs_struct(request)
+        elif request.GET.get('subv') == 'deps':
+            return deps_struct(request)
         return cols_struct(request) # default
     elif request.GET.get('v') in ('insert', 'ins'):
         return insert(request)

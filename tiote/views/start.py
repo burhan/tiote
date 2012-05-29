@@ -5,7 +5,7 @@ from django.template import loader, RequestContext, Template
 from django.views.decorators.gzip import gzip_page
 from django.conf import settings
 
-from tiote import forms, sql
+from tiote import forms, sql, sa
 from tiote.utils import *
 from tiote.views import *
 
@@ -160,7 +160,7 @@ def query(request):
         if f.is_valid():
             query_string = request.POST.get('query')
             if request.GET.get('db', False): conn_params['db'] = request.GET.get('db')
-            r = sql.full_query(conn_params, query_string)
+            r = sa.full_query(conn_params, query_string)
             # if query encountered an error
             if type(r) == str:
                 ret = '<div class="alert-message error block-message .span6">{0}</div>'.format(

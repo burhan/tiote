@@ -26,7 +26,6 @@ def full_query(conn_params, query):
     executes and returns a query result
     '''
     eng = create_engine(get_conn_link(conn_params))
-    conn = None
     try:
         conn = eng.connect()
         if type(query) in (str, unicode):

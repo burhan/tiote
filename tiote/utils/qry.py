@@ -349,3 +349,64 @@ def get_home_variables(request):
         else:
             return fns.http_500(result)
 
+
+def get_dependencies(conn_params, get_data={}): # might later be extended for objects besides tables
+    '''
+    logic from pgadmin3
+    '''
+    # get the total listing of the dependent types
+    conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']
+    q_1 = sql.generate_query('pgadmin_deps', conn_params['dialect'], get_data)[0]
+    totl_deps = sa.full_query(conn_params, q_1)
+    # columns in totl_deps are u'deptype', u'classid', u'relkind', u'adbin', u'adsrc', u'type', 
+    #                           u'ownertable', u'refname', u'nspname'
+    # raise Exception(totl_deps)
+    columns = ('type', 'name', 'restriction',)
+    
+    tbl_data_rows = []
+    refname, typestr = '', ''
+    for row in totl_deps['rows']:
+        # get the type of this object described in this row
+        # type is the sixth column of this query
+        type_ = row[5]
+        if type_[0] in ('c', 's', 't'):
+            typestr = '' # ununderstood types: handled internally
+        elif type_[0] == 'i': typestr = 'index'
+        elif type_[0] == 'S': typestr = 'sequence'
+        elif type_[0] == 'v': typestr = 'view'
+        elif type_[0] == 'x': typestr = 'exttable'
+        elif type_[0] == 'p': typestr = 'function'
+        elif type_[0] == 'n': typestr = 'schema'
+        elif type_[0] == 'y': typestr = 'type'
+        elif type_[0] == 'T': typestr = 'trigger'
+        elif type_[0] == 'l': typestr = 'language'
+        elif type_[0] == 'R':
+            pass
+        elif type_[0] == 'C':
+            if type_[1] == 'c': typestr = 'check'
+            elif type_[1] == 'f': 
+                refname = row[6] +'.'
+                typestr = 'foreign key'
+            elif type_[1] == 'u': typestr = 'unique'
+            elif type_[1] == 'p': typestr = 'primary key'
+            elif type_[1] == 'x': typestr = 'exclude'
+        elif type_[0] == 'A':
+            if row[3] != None and row[3].startswith("{FUNCEXPR"):
+                typestr = 'function'
+                refname = row[4] # adbin
+        # complete refname
+        # appends the name of the foreign key if the type of object is a foreign key
+        # function has the refname already set
+        refname = refname + row[7] # refname
+        # deptype is the first column of this query
+        deptype = row[0]
+        if deptype == 'i': depstr = 'internal'
+        elif deptype == 'a': depstr = 'auto'
+        elif deptype == 'n': depstr = 'normal'
+        elif deptype == 'p': depstr = 'pin'
+
+        tbl_data_rows.append([typestr, refname, depstr])
+
+    return {'count': totl_deps['count'], 'columns': columns, 
+        'rows': tbl_data_rows
+    }

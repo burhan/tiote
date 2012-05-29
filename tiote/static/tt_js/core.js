@@ -617,7 +617,7 @@ Page.prototype.reload = function() {
 // function that is called on on every form request
 function formResponseListener(text, xml, form, navObject) {
 	$E('.msg-placeholder').getChildren().destroy();
-	if (navObject['v'] == 'query') {
+	if (navObject['v'] == 'q') {
 		$E('.query-results').set('html', text);
 		if ($E('.query-results').getElement('div.alert-message')) {
 			tweenBgToWhite($E('.query-results div.alert-message'))
