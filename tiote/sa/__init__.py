@@ -13,12 +13,20 @@ _engine = None
 def _get_or_set_engine(request):
     global _engine
     conn_params = fns.get_conn_params(request)
-    if request.GET.get('db'):
-        conn_params['db'] = request.GET.get('db')
-    if _engine is None:
-        _engine = create_engine(get_conn_link(conn_params), 
-                    pool_size=20) # abitrary size: the size was picked up from the SA's docs
+    return _get_engine(conn_params, request.GET)
+
+def _get_engine(conn_params, get_data):
+    global _engine
+    if _engine is not None:
+        return _engine
+    if get_data.get('db'):
+        conn_params['db'] = get_data.get('db')
+
+    _engine = create_engine(get_conn_link(conn_params), 
+            pool_size=20) # abitrary size: the size was picked up from the SA's docs    
+
     return _engine
+
 # columns things
 
 def full_query(conn_params, query):

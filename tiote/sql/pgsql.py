@@ -265,22 +265,6 @@ ORDER BY table_name ASC"
             )
         return tuple(queries)
 
-    elif query_type == 'total_tbl_deps': # every tbl dependencies
-        stmt  = '''
-        SELECT
-            classid::regclass,
-            objid::regclass,
-            refobjid::regclass,
-            deptype
-        FROM
-            pg_catalog.pg_depend
-            
-        WHERE
-            refobjid::regclass = '{tbl}'::regclass
-        '''
-        q0 = stmt.format(**query_data)
-        return (q0, )
-
     elif query_type == 'pgadmin_deps':
         # lifted from pgadmin3
         stmt = '''
@@ -323,7 +307,7 @@ ORDER BY table_name ASC"
             LEFT JOIN pg_attrdef ad ON ad.oid=dep.objid
 
         WHERE 
-            dep.refobjid::regclass = '{tbl}'::regclass AND
+            dep.refobjid::regclass = '{schm}.{tbl}'::regclass AND
             classid  IN (
                 SELECT oid 
                 FROM pg_class
