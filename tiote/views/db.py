@@ -35,7 +35,7 @@ def tbl_overview(request):
     '''
     'overview' view of tables. editing, deletion and creation of tables
     '''
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
     # table deletion or emptying request catching and handling
     if request.method == 'POST' and request.GET.get('upd8'):
         # format the where_stmt to a mapping of columns to values (a dict)
@@ -72,7 +72,7 @@ def tbl_overview(request):
 
 
 def seq_overview(request):
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
 
     if request.method == 'POST':
         # format the where_stmt to a mapping of columns to values (a dict)

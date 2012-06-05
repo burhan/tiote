@@ -50,14 +50,12 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
     elif query_type == 'drop_table':
         queries = []
         for where in query_data['conditions']:
-            where['table'] = where['table'].replace("'", "")
             queries.append( "DROP TABLE {0}{table}".format(prfx, **where))
         return tuple(queries)
     
     elif query_type == 'empty_table':
         queries = []
         for where in query_data['conditions']:
-            where['table'] = where['table'].replace("'", "")
             queries.append( "TRUNCATE {0}{table}".format(prfx, **where) )
         return tuple(queries)
 
@@ -71,10 +69,16 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
     elif query_type == 'drop_db':
         queries = []
         for where in query_data['conditions']:
-            where['name'] = where['name'].replace("'", "")
             queries.append( "DROP DATABASE {name}".format(**where) )
         return tuple(queries)
-    
+
+    elif query_type == 'drop_column':
+        queries = []
+        for where in query_data['conditions']:
+            sql_stmt = "ALTER TABLE {schm_prefx}{tbl} DROP COLUMN {column}".format(
+                schm_prefx=prfx, tbl=query_data['tbl'], **where)
+            queries.append(sql_stmt)
+        return tuple(queries)
     
     if dialect == 'postgresql':
     	return pgsql.generate_query(query_type, query_data=query_data)

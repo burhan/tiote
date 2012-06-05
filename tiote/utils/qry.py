@@ -15,7 +15,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     '''
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
-        'drop_table', 'empty_table', 'delete_row', 'create_column', 'delete_column',
+        'drop_table', 'empty_table', 'delete_row', 'create_column', 'drop_column',
         'drop_db', 'drop_sequence', 'reset_sequence',)
     
     psycopg2_queries = ('drop_db', )
@@ -44,9 +44,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         else:
             return fns.http_500(r)
         
-    elif query_type in ('indexes', 'primary_keys', 'foreign_key_relation'):
-        
-        if conn_params['dialect'] == 'postgresql': conn_params['db'] = get_data['db']
+    elif query_type in ('indexes', 'primary_keys', 'foreign_key_relation'):        
         r = sa.full_query(conn_params,
             sql.generate_query(query_type, conn_params['dialect'], get_data)[0])
         return r
@@ -59,7 +57,8 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         sub_q_data['where'] = ""
         for ind in range(len(post_data)):
             sub_q_data['where'] += post_data.keys()[ind].strip() + "=" 
-            sub_q_data['where'] += post_data.values()[ind].strip()
+            val = post_data.values()[ind].strip()
+            sub_q_data['where'] += fns.quote(val)
             if ind != len(post_data) - 1: sub_q_data['where'] += ' AND '
         # retrieve and run queries
         conn_params['db'] = get_data['db']
@@ -70,7 +69,6 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         
 
     elif query_type in ('table_rpr', 'table_structure', 'raw_table_structure', 'seqs_rpr'):
-        conn_params['db'] = get_data['db']
         sub_q_data = {'db': get_data['db'],}
         if get_data.has_key('tbl'):
             sub_q_data['tbl'] = get_data['tbl']
@@ -118,7 +116,6 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         for item in ('schm', 'sort_key', 'sort_dir',):
             if get_data.has_key(item): sub_q_data[item] = get_data[item]
         # retrieve and run queries
-        conn_params['db'] = get_data['db']
         keys = rpr_query(conn_params, 'primary_keys', sub_q_data)
         count = sa.full_query(conn_params, 
             sql.generate_query('count_rows', conn_params['dialect'], sub_q_data)[0],
@@ -133,25 +130,8 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
             return r
         else:
             return fns.http_500(r)
-        
-    # queries that just asks formats and return result
-    elif query_type in ('existing_tables',):
-        query_data = {'db':get_data['db'],}
-        if get_data.has_key('tbl'): query_data['tbl'] = get_data['tbl']
-        if conn_params['dialect'] == 'postgresql':
-            query_data['schm'] = get_data['schm']
-            conn_params['db'] = query_data['db']
-            
-        q = sql.generate_query(query_type, conn_params['dialect'], query_data)
-        r =  sa.full_query(conn_params,
-            q[0])
-        return r['rows']
 
-        
-    # queries with dissimilar implementations
-    elif conn_params['dialect'] == 'postgresql':
-            return fns.http_500('query ({query_type}) not implemented!'.format(query_type=query_type))
-            
+    # queries with dissimilar implementations 
     elif conn_params['dialect'] == 'mysql':
         
         if query_type == 'describe_databases':
@@ -238,8 +218,8 @@ def insert_row(conn_params, get_data={}, form_data={}):
         if type(form_data[k]) == list:
             value = u",".join(  form_data[k]  )
             values.append( fns.quote(value) )
-        else: 
-            values.append(  fns.quote( unicode(form_data[k]) )  )
+        else:
+            values.append( fns.quote(form_data[k]) )
 
     # generate sql insert statement
     q = u"INSERT INTO {0}{tbl} ({1}) VALUES ({2})".format(
@@ -274,7 +254,7 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
             value = u",".join(  form_data[k]  )
             values.append( fns.quote(value) )
         else: 
-            values.append(  fns.quote( unicode(form_data[k]) )  )
+            values.append( fns.quote(form_data[k]) )
 
     # generate SET sub statment
     _l_set = []
@@ -284,7 +264,7 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
     # generate WHERE sub statement
     _l_where = []
     for key in indexed_cols:
-        short_stmt = u"=".join([ key, fns.quote(  unicode(form_data[key])  ) ])
+        short_stmt = u"=".join([ key, fns.quote(form_data[key]) ])
         _l_where.append(short_stmt)
 
     # generate full query
@@ -306,29 +286,26 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
 
 
 def do_login(request, cleaned_data):
-    host = cleaned_data['host']
-    username = cleaned_data['username']
-    password = cleaned_data['password']
-    database_driver = cleaned_data['database_driver']
-    dict_post = {'username':username,'password':password,'database_driver':database_driver, 'host':host}
-    if 'connection_database' in cleaned_data:
-        dict_post['connection_database'] = cleaned_data['connection_database']
+    '''
+    run query for login, store information in session if successful and then
+    return the result of the login query
+    '''
+    # prep variables
+    dict_post = {}
+    for k in ['host', 'username', 'password', 'database_driver', 'connection_database']:
+        dict_post[k] = cleaned_data.get(k)
+    # run login query
     dict_cd = sa.model_login(dict_post)
-    if not dict_cd['login']:
-        #authentication failed
-        return dict_cd
-    
-    else:
-        # authentication succeeded
+    # load variables to session if login is succesfull
+    if dict_cd['login']:
         request.session['TT_LOGIN'] = 'true'
-        request.session['TT_USERNAME'] = username
-        request.session['TT_PASSWORD'] = password
-        request.session['TT_DIALECT'] = database_driver
-        request.session['TT_HOST'] = host
-        if 'connection_database' in dict_post:
-            request.session['TT_DATABASE'] = dict_post['connection_database']
-        return dict_cd
-    
+        for k in dict_post:
+            if k == 'connection_database': new_key = 'TT_DATABASE'
+            elif k == 'database_driver': new_key = 'TT_DIALECT'
+            else: new_key = 'TT_' + k.upper()
+            request.session[new_key] = dict_post[k]
+    return dict_cd
+
 
 def get_home_variables(request):
     p = fns.get_conn_params(request)

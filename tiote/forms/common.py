@@ -32,9 +32,9 @@ pgsql_encoding = ('UTF8', 'SQL_ASCII', 'BIG5', 'EUC_CN', 'EUC_JP', 'EUC_KR', 'EU
     'LATIN8', 'LATIN9', 'LATIN10', 'MULE_INTERNAL', 'WIN866', 'WIN874', 'WIN1250', 'WIN1251',
     'WIN1252', 'WIN1253', 'WIN1254', 'WIN1255', 'WIN1256', 'WIN1257', 'WIN1258')
 
-mysql_key_choices = ('primary','unique','index')
+key_choices = ('primary','unique','index')
 
-pgsql_key_choices = ('unique', 'primary', 'foreign')
+pgsql_key_choices = mysql_key_choices = key_choices
 
 mysql_other_choices = ('unsigned','binary','not null','auto increment' )
 

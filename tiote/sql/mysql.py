@@ -204,14 +204,4 @@ def generate_query(query_type, query_data=None):
         """
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
-    
-    elif query_type == 'existing_tables':
-        stmt = """
-        SELECT table_name 
-        FROM information_schema.tables 
-        WHERE table_schema= :db
-        """
-        q0 = text(stmt, bindparams=bindparams)
-        return (q0, )
-
 

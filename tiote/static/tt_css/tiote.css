@@ -286,7 +286,7 @@ table.sql tbody td:first-child, .tbl-header table td:first-child {
     border-left: 1px solid #DDDDDD;
 }
 table.sql td.controls {
-    min-width: 20px;
+    /*min-width: 20px;*/
 }
 table.sql td.controls * {
 }

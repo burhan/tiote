@@ -185,16 +185,6 @@ def generate_query(query_type, query_data=None):
         """
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
-    
-    elif query_type == 'existing_tables':
-        # selects both tables and views
-        stmt = "SELECT table_name FROM information_schema.tables WHERE table_schema= :schm \
-ORDER BY table_name ASC"
-        # selects only tables
-#        stmt = "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname= :schm \
-#ORDER BY tablename ASC"
-        q0 = text(stmt, bindparams=bindparams)
-        return (q0, )
 
     elif query_type == 'foreign_key_relation':
         stmt = """

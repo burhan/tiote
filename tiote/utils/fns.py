@@ -98,9 +98,10 @@ def get_conditions(l):
         d = {}
         for ii in range( len(ll) ):
             lll = ll[ii].strip().split('=')
-            d.update( {lll[0].lower() : lll[1].lower()} )
+            d[ lll[0].lower() ] = lll[1].lower()
         conditions.append(d)
     return conditions
+
 
 def response_shortcut(request, template = False, extra_vars=False ):
     '''
@@ -121,7 +122,7 @@ def response_shortcut(request, template = False, extra_vars=False ):
     return h
 
 
-def get_conn_params(request):
+def get_conn_params(request, update_db=False):
     data = {}
     data['host'] = request.session.get('TT_HOST')
     data['username'] = request.session.get('TT_USERNAME')
@@ -131,7 +132,12 @@ def get_conn_params(request):
         data['db'] = request.session.get('TT_DATABASE')
     else:
         data['db'] = '' if data['dialect'] =='mysql' else 'postgres'
-    return data    
+    # get the new 'db' from the request.GET and update the 'db' key of the
+    # - returned dict only if udpate_db is true
+    if update_db and request.GET.get('db'):
+        data['db'] = request.GET.get('db')
+    return data
+
 
 def qd(query_dict):
     '''
@@ -175,12 +181,13 @@ def parse_indexes_query(tbl_indexes, needed_indexes=None):
     return _dict
 
 
-def quote(_str):
+def quote(obj):
     '''
-    return a single quoted version of the passed in string _str
+    return a single quoted version of the passed in string obj
     '''
-    if type(_str) == str:
-        return "'%s'" % _str
-    elif type(_str) == unicode:
-        return u"'%s'" % _str
-
+    if type(obj) == str:
+        return "'%s'" % obj
+    elif type(obj) == unicode:
+        return u"'%s'" % obj
+    else:
+        return obj

@@ -10,7 +10,7 @@ import base
 
 
 def browse(request):
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
     # row(s) deletion request handling
     if request.method == 'POST' and request.GET.get('upd8') == 'delete':
         return qry.rpr_query(conn_params, 'delete_row', 
@@ -43,38 +43,47 @@ def base_struct(request, **kwargs):
     subnav_list = ['cols', 'idxs',]
     if conn_params['dialect'] == 'postgresql': subnav_list.append('deps')
 
+    props = {'props_table': True }
+    if kwargs.get('tbl_props'):
+        props.update(kwargs.get('tbl_props'))
+        kwargs.pop('tbl_props')
+
     c = base.CompositeTableView(
         url_prfx = url_prefix, 
         subnav_list = subnav_list,
-        tbl_props = {'props_table': True },
+        tbl_props = props,
         **kwargs)
 
     return c.get(request)
 
 
 def cols_struct(request):
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
 
     # column editing/deleting
     if request.method == 'POST' and request.GET.get('upd8'):
-        l = request.POST.get('whereToEdit').strip().split(';')
+        # format the where_stmt to a mapping of columns to values (a dict)
+        l = request.POST.get('where_stmt').strip().split(';')
         conditions = fns.get_conditions(l)
-        
-        if request.GET.get('upd8') == 'delete':
-            q = 'delete_column'
-            query_data = {'db': request.GET.get('db'), 'table': request.GET.get('table'),
-                'conditions': conditions}
+        # determine query to run
+        if request.GET.get('upd8') in ('delete', 'drop',):
+            q = 'drop_column'
+            query_data = {'conditions': conditions}
+            for k in ['db', 'tbl',]: query_data[k] = request.GET.get(k)
+            if request.GET.get('schm'):
+                query_data['schm'] = request.GET.get('schm')
             
             return qry.rpr_query(conn_params, q, query_data)
 
     # table view
     tbl_cols = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
-    return base_struct(request, tbl_data=tbl_cols, show_tbl_optns=False, 
+    return base_struct(request, tbl_data=tbl_cols, show_tbl_optns=True,
+        tbl_props= {'keys': (('column', 'key'), )}, tbl_optn_type='tbl_like',
         subv='cols', empty_err_msg="Table contains no columns")
 
 
 def idxs_struct(request):
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
 
     if request.method == 'POST':
         pass
@@ -86,7 +95,7 @@ def idxs_struct(request):
 
 
 def deps_struct(request):
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
 
     # view and deletion things
     tbl_deps = qry.get_dependencies(conn_params, fns.qd(request.GET))
@@ -96,7 +105,7 @@ def deps_struct(request):
 
 def insert(request):
     # make queries and inits
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
     tbl_struct_data = qry.rpr_query(conn_params, 'raw_table_structure', fns.qd(request.GET))
     # keys = ['column','type','null','default','character_maximum_length','numeric_precision','numeric_scale']
     tbl_indexes_data = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
@@ -135,7 +144,7 @@ def edit(request):
         h.set_cookie('TT_NEXT', str( urlencode(d) )  )
         return h
     # inits and queries
-    conn_params = fns.get_conn_params(request)
+    conn_params = fns.get_conn_params(request, update_db=True)
     tbl_struct_data = qry.rpr_query(conn_params, 'raw_table_structure', fns.qd(request.GET))
     # keys = ['column','type','null','default','character_maximum_length','numeric_precision','numeric_scale']
     tbl_indexes_data = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))

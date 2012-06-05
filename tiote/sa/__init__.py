@@ -4,7 +4,7 @@ sa induced logic
 '''
 import datetime
 from tiote.utils import *
-from sqlalchemy import create_engine, text, sql
+from sqlalchemy import create_engine, text, sql, MetaData
 from sqlalchemy.engine.url import URL
 
 # engine should be a global thing, should be created once and worked on
@@ -13,16 +13,14 @@ _engine = None
 def _get_or_set_engine(request):
     global _engine
     conn_params = fns.get_conn_params(request)
-    return _get_engine(conn_params, request.GET)
+    return _get_engine(conn_params,)
 
-def _get_engine(conn_params, get_data):
+def _get_engine(conn_params,):
     global _engine
     if _engine is not None:
         return _engine
-    if get_data.get('db'):
-        conn_params['db'] = get_data.get('db')
 
-    _engine = create_engine(get_conn_link(conn_params), 
+    _engine = create_engine(get_conn_link(conn_params),
             pool_size=20) # abitrary size: the size was picked up from the SA's docs    
 
     return _engine
@@ -87,7 +85,6 @@ def model_login(conn_params):
     elif not conn_params['connection_database'] and conn_params['database_driver'] == 'postgresql':
         link.database = 'postgres'
     engine = create_engine(link)
-    conn = ''
     dict_ret = {}
     try:
         conn = engine.connect()
@@ -134,10 +131,19 @@ def transform_args_to_bindparams(argmap):
         _l.append(sql.bindparam(key, value))
     return _l
 
-def get_default_schema(request):
-    _engine = _get_or_set_engine(request)
+def get_default_schema(conn_params):
+    _engine = _get_engine(conn_params)
     return _engine.dialect._get_default_schema_name(_engine.connect())
 
+
+def get_table_names(conn_params, get_data={}):
+    ''' return the existing tables in a db connection '''
+    if not get_data.has_key('tbl'):
+        raise KeyError('tbl')
+
+    _engine = _get_engine(conn_params)
+    return _engine.dialect.get_table_names(_engine.connect(),
+        schema=get_data.get('schm', None) )
 
 def execute_outside_transaction(conn_params, stmts):
     '''
@@ -163,4 +169,17 @@ def execute_outside_transaction(conn_params, stmts):
         cur.close()
         conn.close()
         return {'status':'success', 'msg':''}
+
+
+def insert(conn_params, get_data={}, post_data={}):
+    # get_data must have key 'tbl'
+    if not get_data.get('tbl'):
+        raise KeyError('tbl ')
+
+    engine = _get_engine(conn_params, get_data)
+    meta = MetaData()
+    meta.bind = engine
+
+    tbl = Table(get_data.get('tbl'), meta, autoload=True,
+        schema_name = get_data.get('schm'))
 

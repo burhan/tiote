@@ -1,18 +1,21 @@
 
-function generate_ajax_url(withAjaxKey,extra_data) {
+function generate_ajax_url(withAjaxKey,extra_data, prefix) {
 	extra_data = extra_data || {};
+	prefix = prefix || "";
 	withAjaxKey = withAjaxKey || false;
 	var n = new Hash( page_hash() );
 	n.extend(extra_data);
-	var request_url = 'ajax/?';
-	n.each(function(item,key){
-		if (key == 'sctn') {
-			request_url += key + '=' + item;
-		}
-		else {
-			request_url += '&' + key + '=' + item;
-		}
-	})
+	var request_url = 'ajax/?' + prefix;
+	var keys = Object.keys(n);
+	
+	for (var i = 0; i < keys.length; i++) {
+		var key = keys[i];
+		if (prefix.length == 0 && i == 0)
+			request_url += key + '=' + n[key];
+		else
+			request_url += '&' + key + '=' + n[key];
+	}
+
 	if (withAjaxKey) request_url += '&ajaxKey=' + _ajaxKey;
 	return request_url
 }
@@ -238,8 +241,11 @@ function generate_where(tbl, row_in, for_post) {
 	var keys = tbl.vars.keys;
 	for (var i = 0; i < keys.length; i++) {
 		if (keys[i][0] == "") continue;
-		stmt += keys[i][0] + '=\'' + $ES('tbody tr', tbl)[row_in].getElements('td')[keys[i][2]].get('text');
-		stmt += (i != keys.length - 1) ? "\' {0} ".substitute([delimitr]) : "\'"; 
+		// add quotes to the values, keys have not quotes
+//		stmt += keys[i][0] + '=\'' + $ES('tbody tr', tbl)[row_in].getElements('td')[keys[i][2]].get('text');
+//		stmt += (i != keys.length - 1) ? "\' {0} ".substitute([delimitr]) : "\'"; 
+		stmt += keys[i][0] + '=' + $ES('tbody tr', tbl)[row_in].getElements('td')[keys[i][2]].get('text');
+		stmt += (i != keys.length - 1) ? " {0} ".substitute([delimitr]) : ""; 
 	}
 	return stmt;
 }

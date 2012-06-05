@@ -265,7 +265,7 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 	if (clear_sidebar != true) return;
 	
 	new XHR({
-		url : generate_ajax_url() + '&q=sidebar&type=repr',
+		url : generate_ajax_url(false, {}, '&q=sidebar&type=repr'),
 		method: 'get',
 		onSuccess: function(text,xml){
 			// if the sidebar contains elements destroy them
@@ -378,24 +378,25 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 	
 	// behaviour
 	$$('table.sql').each(function(tbl, tbl_in){
-		pg.tbls.include(new HtmlTable($(tbl)));
-		make_checkable(pg.tbls[tbl_in]);
+		var html_table = new HtmlTable($(tbl))
+		pg.tbls.include(html_table);
+		make_checkable(html_table);
 		// attach the variables passed down as javascript objects to the 
 		// table object
-		pg.tbls[tbl_in]['vars'] = {}; var data;// containers
-		if ($(pg.tbls[tbl_in]).get('data')) {
+		html_table['vars'] = {}; var data;// containers
+		if (tbl.get('data')) {
 			data = {}
-			$(pg.tbls[tbl_in]).get('data').split(';').each(function(d){
+			tbl.get('data').split(';').each(function(d){
 				var ar = d.split(':');
 				data[ar[0]] = ar[1];
 			});
-			pg.tbls[tbl_in]['vars']['data'] = data; // schema: [key: value]
+			html_table['vars']['data'] = data; // schema: [key: value]
 		}
-		if ($(pg.tbls[tbl_in]).get('keys')) {
+		if (tbl.get('keys')) {
 			data = []; // data[[1,2,3],...] indexes 1: name of column,
 							// 2 : index type
 							// 3 : column position in tr
-			$(pg.tbls[tbl_in]).get('keys').split(';').each(function(d){
+			tbl.get('keys').split(';').each(function(d){
 				var ar = d.split(':');
 				if (ar[0] != "") data.include(ar);
 			});
@@ -407,15 +408,15 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 				}
 			});
 
-			pg.tbls[tbl_in]['vars']['keys'] = data; // schema: [column, key_type, column index]
+			html_table['vars']['keys'] = data; // schema: [column, key_type, column index]
 		}
 
 		// handle a.display_row(s) click events
-		$(tbl).getElements('a.display_row').each(function(al, al_in){
-			if ($(tbl).get('keys' != null)) {	// functionality requires keys
+		tbl.getElements('a.display_row').each(function(al, al_in){
+			if (tbl.get('keys' != null)) {	// functionality requires keys
 				// attach click event
 				al.addEvent('click', function(e) {
-					var where_stmt = generate_where(pg.tbls[tbl_in], al_in, true);
+					var where_stmt = generate_where(html_table, al_in, true);
 					// make xhr request
 					new XHR({
 						url: generate_ajax_url() + '&q=get_row&type=fn',
@@ -501,7 +502,7 @@ function edit_page(where_stmt) {
 	// 2. request edit page
 	var navObj = page_hash(); navObj['subv'] = 'edit';
 	new XHR({
-		url: 'ajax/?' + Object.toQueryString(navObj), spinTarget: $('tt_content'),
+		url: generate_ajax_url(), spinTarget: $('tt_content'),
 		onSuccess: function(text, xml) {
 			$('tt-content').set('html', text);
 			pg.completeForm();
@@ -547,8 +548,17 @@ function do_action(tbl, e) {
 			msg += where_stmt.contains(';') ? "tables" : "table";
 	}
 		
-	else if (navObject['sctn'] == "tbl" && navObject['v'] == 'browse')
-		msg += where_stmt.contains(';') ? "rows" : "row";
+	else if (navObject['sctn'] == "tbl") {
+		if (navObject['v'] == 'browse')
+			msg += where_stmt.contains(';') ? "rows" : "row";
+		else if (navObject['v'] == 'struct') {
+			if (navObject['subv'] == 'idxs')
+				msg += where_stmt.contains(';') ? 'indexes': 'index';
+			else
+				// it defaults to columns if there is no subv or the subv contains 'cols'
+				msg += where_stmt.contains(';') ? 'columns': 'column';
+		}
+	}
 	else if (navObject['sctn'] == 'hm' && navObject['v'] == "dbs")
 		msg += where_stmt.contains(";") ? "databases": "database";
 	// confirm if intention is to be carried out
@@ -581,7 +591,9 @@ function do_action(tbl, e) {
 
 
 Page.prototype.browseView = function() {	
-	if (! document.getElement('.tbl-header')) return;
+	if (! document.getElement('.tbl-header')) 
+		return;
+	
 	var theads = document.getElement('.tbl-header table tr').getElements('td[class!=controls]');
 	theads.setStyle('cursor', 'pointer');
 	theads.each(function(thead, thead_in){
@@ -714,12 +726,10 @@ var XHR = new Class({
 		// redirect page based on Cookie
 		this.addEvent('onComplete', function() {
 			if (Cookie.read('TT_SESSION_TIMEOUT')) {
-				console.log('session timeout');
 				Cookie.dispose('TT_SESSION_TIMEOUT');
 				Cookie.write('TT_NEXT', Object.toQueryString(page_hash()));
 			    // funny redirect
-		        location.href = location.protocol + '//'+ location.host + location.pathname + 'login/'
-
+		        location.href = location.protocol + '//'+ location.host + location.pathname + 'login/';
 			}
 		});
 		

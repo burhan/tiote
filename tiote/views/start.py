@@ -157,7 +157,7 @@ def query(request):
     conn_params = fns.get_conn_params(request)
     if request.method == 'POST':
         f = forms.QueryForm(request.POST)
-        if f.is_valid():
+        if f.is_valid(): # form validation successful
             query_string = request.POST.get('query')
             if request.GET.get('db', False): conn_params['db'] = request.GET.get('db')
             r = sa.full_query(conn_params, query_string)

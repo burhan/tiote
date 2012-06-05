@@ -198,16 +198,15 @@ class QueryForm(forms.Form):
         widget = forms.Textarea(attrs={'class':'required span10','rols':0, 'cols':0, 'style':'height:100px;resize:none;'},) )
 
 
-def get_dialect_form(form_name, dialect):
+def get_dialect_form(form_cls, dialect):
     '''
     structure of dialect_forms:
-        { 'form_name': [ postgresql version of form_name, mysql version of form_name] }
+        { 'form_cls': [ postgresql version of form_cls, mysql version of form_cls] }
     '''
     dialect_forms = {
         'DbForm': [pgsqlDbForm, mysqlDbForm],
         'UserForm': [pgsqlUserForm, mysqlUserForm],
         'TableForm': [pgsqlTableForm, mysqlTableForm],
-#        'InsertForm': [pgsqlInsertForm, mysqlInsertForm]
     }
     
-    return dialect_forms[form_name][0] if dialect == 'postgresql' else dialect_forms[form_name][1]
+    return dialect_forms[form_cls][0] if dialect == 'postgresql' else dialect_forms[form_cls][1]
