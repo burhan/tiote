@@ -21,7 +21,7 @@ window.addEvent('domready', function() {
 	_abbrev = new Object();
 	_abbrev['keys'] = JSON.decode(_abbrev_keys);
 	_abbrev['values'] = JSON.decode(_abbrev_values);
-	delete _abbrev_keys; delete _abbrev_values; // maybe it will reduce memory (so c++)
+	delete _abbrev_keys;delete _abbrev_values; // maybe it will reduce memory (so c++)
 	
 	// if the location string contains hash tags
 	if (location.hash) {
@@ -107,7 +107,7 @@ Page.prototype.updateTitle = function(new_title){
 			title += ' / ' + r['v'];
 		// append spilter to the title of the page
 		//- functions(more like navigation depth) : objects ( db or tbl or schm we are working on)
-		title += " :  ";
+		title += " :";
 		['db','schm','tbl'].each(function(or_item){
 			if (Object.keys(r).contains(or_item)) title += ' / ' + r[or_item];
 		});
@@ -495,30 +495,21 @@ Page.prototype.addTableOpts = function() {
 	
 }
 
-function edit_page(where_stmt) {
-//	console.log('row have been selected for edition');
-	// 1. clear page
-	pg.clearPage(false);
-	// 2. request edit page
-	var navObj = page_hash(); navObj['subv'] = 'edit';
+function edit_view(where_stmt) {
+	// make xhr query for edit form
 	new XHR({
-		url: generate_ajax_url(), spinTarget: $('tt_content'),
+		url: generate_ajax_url() + '&subv=edit',
+		spinTarget: $('tt_content'),
 		onSuccess: function(text, xml) {
-			$('tt-content').set('html', text);
-			pg.completeForm();
+//			$('tt-content').set('html', text);
+			var sm_obj = showDialog('edit',	text, {
+				hideFooter: true, closeOnEsc: true,
+				overlayClick: false , width: '450px'
+			});
+			Cookie.write("tt_edit_form", 'true');
+			pg.completeForm(sm_obj);
 		}
 	}).post({where_stmt: where_stmt});
-
-	// update location hash
-	nav.set('subv', 'edit', true);
-
-	// 3. add edit handle to the topbar
-	$$('#topbar .nav li').removeClass('active')
-	$E('#topbar .nav').adopt(
-		new Element('li', {'class': 'active'}).adopt(
-			new Element('a',{'href':'#' + Object.toQueryString(navObj), text: 'Edit' })
-		)
-	);
 }
 
 
@@ -569,7 +560,7 @@ function do_action(tbl, e) {
 		model: 'confirm', 
 		callback: function() {
 			if (action == 'edit') {
-				edit_page(where_stmt);
+				edit_view(where_stmt);
 			} else {
 				new XHR({
 					url: generate_ajax_url(false, {}) + '&upd8=' + action,
@@ -599,7 +590,7 @@ Page.prototype.browseView = function() {
 	theads.each(function(thead, thead_in){
 		// add click event
 		thead.addEvent('click', function(e){
-			var o = page_hash(); var key = thead.get('text'); var dir = '';
+			var o = page_hash();var key = thead.get('text');var dir = '';
 			if (o.sort_key != undefined && o.sort_key != key ) {
 				dir = 'asc'
 			} else {
@@ -607,7 +598,7 @@ Page.prototype.browseView = function() {
 				else if (o.sort_dir == 'desc') dir = 'asc';
 				else dir = 'asc';
 			}
-			o['sort_dir'] = dir; o['sort_key'] = key;
+			o['sort_dir'] = dir;o['sort_key'] = key;
 			location.hash = "#" + Object.toQueryString(o);
 		});
 		// mark as sort key
@@ -626,10 +617,11 @@ Page.prototype.reload = function() {
 	this.loadPage();
 }
 
+
 // function that is called on on every form request
-function formResponseListener(text, xml, form, navObject) {
+function formResponseListener(text, xml, form, n_obj, dialog_handler) {
 	$E('.msg-placeholder').getChildren().destroy();
-	if (navObject['v'] == 'q') {
+	if (n_obj['v'] == 'q') {
 		$E('.query-results').set('html', text);
 		if ($E('.query-results').getElement('div.alert-message')) {
 			tweenBgToWhite($E('.query-results div.alert-message'))
@@ -639,19 +631,23 @@ function formResponseListener(text, xml, form, navObject) {
 	}
 	var resp = JSON.decode(text);
 	if (resp['status'] == 'success'){
-		if (navObject['subv'] == 'edit') {
-			$(form).destroy();
+		if (Cookie.read('tt_edit_form')) {
+			$(form).destroy(); // destroy the current edit form
 			if (!$$('.tt_form').length) {
-				delete navObject.subv;
-				redirectPage(navObject);
-				return;
+				// if there are no more forms close the edit dialog
+				dialog_handler.hide();
+				Cookie.dispose('tt_edit_form');
+				// reload the view to update tables
+//				pg.loadPage(); // some events are called (means not attached)
+				reloadPage(page_hash());
 			}
-		} else {
-			form.reset(); // delete the input values
 		}
+		else 
+			form.reset(); // delete the input values
 	}
-	var html = ("" + resp['msg']).replace("\n","&nbsp;")
-	if (navObject['v']=='insert' || navObject['subv']=='edit') {
+	
+	var html = ("" + resp['msg']).replace("\n","&nbsp;");
+	if (n_obj['v']=='insert' || Cookie.read('tt_edit_form')) {
 		$E('.msg-placeholder').set('html', html);
 		tweenBgToWhite($E('.msg-placeholder').getElement('div.alert-message'))
 	}
@@ -659,7 +655,8 @@ function formResponseListener(text, xml, form, navObject) {
 }
 
 
-Page.prototype.completeForm = function(){
+Page.prototype.completeForm = function(dialog_handler){
+	dialog_handler = dialog_handler || false;
 //	console.log('completeForm()!');
 	if (! $$('.tt_form').length) return ; 
 	
@@ -667,7 +664,7 @@ Page.prototype.completeForm = function(){
 		// - function calls formResponseListener with needed variables
 		// - hack to pass out the needed variables to an first class function
 		var onFormResponse = function(text,xml) {
-			formResponseListener(text,xml,form, page_hash());
+			formResponseListener(text,xml,form, page_hash(), dialog_handler);
 		};
 		
 		//attach validation object

@@ -12,9 +12,14 @@ import base
 def browse(request):
     conn_params = fns.get_conn_params(request, update_db=True)
     # row(s) deletion request handling
-    if request.method == 'POST' and request.GET.get('upd8') == 'delete':
-        return qry.rpr_query(conn_params, 'delete_row', 
-            fns.qd(request.GET), fns.qd(request.POST))
+    if request.method == 'POST':
+        if request.GET.get('upd8') == 'delete':
+            l = request.POST.get('where_stmt').strip().split(';')
+            query_data = fns.qd(request.GET)
+            query_data['conditions'] = fns.get_conditions(l)
+            return qry.rpr_query(conn_params, 'delete_row', query_data)
+        else:
+            return edit(request)
     
     tbl_data = qry.rpr_query(conn_params, 'browse_table',
         fns.qd(request.GET), fns.qd(request.POST))
@@ -200,9 +205,9 @@ def edit(request):
 
 # view router
 def route(request):
-    if request.GET.get('subv') == 'edit':
-        return edit(request)
-    elif request.GET.get('v') == 'browse':
+    if request.GET.get('v') == 'browse':
+        if request.GET.get('subv') == 'edit':
+            return edit(request)
         return browse(request)
     elif request.GET.get('v') in ('structure', 'struct'):
         if request.GET.get('subv') == 'idxs':

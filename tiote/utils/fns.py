@@ -124,10 +124,8 @@ def response_shortcut(request, template = False, extra_vars=False ):
 
 def get_conn_params(request, update_db=False):
     data = {}
-    data['host'] = request.session.get('TT_HOST')
-    data['username'] = request.session.get('TT_USERNAME')
-    data['password'] = request.session.get('TT_PASSWORD')
-    data['dialect'] = request.session.get('TT_DIALECT')
+    for k in ['host', 'username', 'password', 'dialect']:
+        data[k] = request.session.get('TT_' + k.upper())
     if request.session.get('TT_DATABASE'):
         data['db'] = request.session.get('TT_DATABASE')
     else:
@@ -191,3 +189,18 @@ def quote(obj):
         return u"'%s'" % obj
     else:
         return obj
+
+def str_quote(obj):
+    ''' always returns a unicode object '''
+    return unicode( quote(obj))
+
+def where_frm_conditns(conditns):
+    where_stmts = []
+    for conditn in conditns:
+        where_stmt, last_key = "", conditn.keys()[-1]
+        for k, v in conditn.iteritems():
+            where_stmt += "{key}={value}".format(key=k, value=quote(v))
+            if k != last_key: where_stmt + "; "
+            where_stmts.append(where_stmt)
+    return where_stmts
+

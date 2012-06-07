@@ -127,6 +127,7 @@ function showDialog(title, msg, options){
 	// center height of dialog
 	var topOffset = (screen.availHeight -  $$('.simple-modal')[0].getSize().x) / 2;
 	$$('.simple-modal')[0].setStyle('top', topOffset)
+	return SM; // as a handle to work on this modal
 }
 
 

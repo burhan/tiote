@@ -252,9 +252,9 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
         cols.append(k)
         if type(form_data[k]) == list:
             value = u",".join(  form_data[k]  )
-            values.append( fns.quote(value) )
+            values.append( fns.str_quote(value) )
         else: 
-            values.append( fns.quote(form_data[k]) )
+            values.append( fns.str_quote(form_data[k]) )
 
     # generate SET sub statment
     _l_set = []
@@ -264,13 +264,13 @@ def update_row(conn_params, indexed_cols={}, get_data={}, form_data={}):
     # generate WHERE sub statement
     _l_where = []
     for key in indexed_cols:
-        short_stmt = u"=".join([ key, fns.quote(form_data[key]) ])
+        short_stmt = u"=".join([ key, fns.str_quote(form_data[key]) ])
         _l_where.append(short_stmt)
 
     # generate full query
     q = u"UPDATE {0}{tbl} SET {set_stmts} WHERE {where_stmts}".format(
         u'{schm}.'.format(**get_data) if conn_params['dialect'] == 'postgresql' else u'',
-        set_stmts = u", ".join(_l_set), where_stmts = u"AND ".join(_l_where), **get_data 
+        set_stmts = u", ".join(_l_set), where_stmts = u" AND ".join(_l_where), **get_data 
     )
     # run query and return results
     ret = sa.short_query(conn_params, (q, ))

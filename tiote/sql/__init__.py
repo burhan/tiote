@@ -3,6 +3,7 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.exc import OperationalError, ProgrammingError, DatabaseError
 import datetime
 
+from tiote.utils import fns
 import mysql, pgsql
 
 
@@ -61,8 +62,9 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
 
     elif query_type == 'delete_row':
         queries = []
-        for whereCond in query_data['where_stmt'].split(';'):
-            q0 = "DELETE FROM {0}{tbl}".format(prfx, **query_data) + " WHERE "+whereCond
+        where_stmt = fns.where_frm_conditns( query_data['conditions'] )
+        for where_cond in where_stmt:
+            q0 = "DELETE FROM {0}{tbl}".format(prfx, **query_data) + " WHERE "+where_cond
             queries.append(q0)
         return tuple(queries)
     
