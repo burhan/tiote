@@ -7,22 +7,10 @@ from tiote.utils import *
 from sqlalchemy import create_engine, text, sql, MetaData
 from sqlalchemy.engine.url import URL
 
-# engine should be a global thing, should be created once and worked on
-_engine = None
-
-def _get_or_set_engine(request):
-    global _engine
-    conn_params = fns.get_conn_params(request)
-    return _get_engine(conn_params,)
 
 def _get_engine(conn_params,):
-    global _engine
-    if _engine is not None:
-        return _engine
-
     _engine = create_engine(get_conn_link(conn_params),
             pool_size=20) # abitrary size: the size was picked up from the SA's docs    
-
     return _engine
 
 # columns things
@@ -54,14 +42,13 @@ def full_query(conn_params, query):
         conn.close()
         return d
     
-def short_query(conn_params, queries, execution_optns={}):
+def short_query(conn_params, queries):
     """
     executes and returns the success state of the query
     """
     eng = create_engine( get_conn_link(conn_params) )
     try:
         conn = eng.connect()
-        if len(execution_optns): conn = conn.execution_options(**execution_optns)
         for query in queries:
             query_result = conn.execute(text(query))
     except Exception as e:
@@ -72,19 +59,17 @@ def short_query(conn_params, queries, execution_optns={}):
         return {'status':'success', 'msg':''}
     
     
-def model_login(conn_params):
+def model_login(login_params):
     '''
     Utility function which is used to simulate logging a user in.
     
     It checks if the username/password/database combination if given is correct.
     '''
-    link = URL(conn_params['database_driver'], username = conn_params['username'],
-        password= conn_params['password'], host = conn_params['host'])
-    if conn_params['connection_database']:
-        link.database = conn_params['connection_database']
-    elif not conn_params['connection_database'] and conn_params['database_driver'] == 'postgresql':
-        link.database = 'postgres'
-    engine = create_engine(link)
+    login_params['db'] = login_params.pop('connection_database')
+    login_params['dialect'] = login_params.pop('database_driver')
+    if not login_params['db'] and login_params['dialect'] == 'postgresql':
+        login_params['db'] = 'postgres'
+    engine = create_engine( get_conn_link(login_params) )
     dict_ret = {}
     try:
         conn = engine.connect()

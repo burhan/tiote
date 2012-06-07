@@ -97,7 +97,7 @@ def login(request):
     if fns.check_login(request):
         return HttpResponseRedirect(redi + '#sctn=hm&v=hm')
     
-    # dialects' info
+    # dialects' info: used for generating info and error messages
     c['dialects'] = [
         {'dialect': 'PostgreSQL', 'dialect_package':'python-psycopg2'},
         {'dialect': 'MySQL', 'dialect_package':'python-mysqldb'}, 

@@ -35,14 +35,17 @@ def check_login(request):
 
 
 def set_ajax_key(request):
-    if not request.session.get('ajaxKey', False):
-        sessid = hashlib.md5( str(random.random()) ).hexdigest()
-        try: # some environments eg. GAE doesn't have this
-            d = request.META['PWD']
-        except KeyError:
-            d = ""
-        request.session['ajaxKey'] = hashlib.md5(sessid + d).hexdigest()[0:10]
-        
+    if request.session.get('ajaxKey', False):
+        return
+
+    sessid = hashlib.md5( str(random.random()) ).hexdigest()
+    try: # some environments eg. GAE doesn't have this
+        d = request.META['PWD']
+    except KeyError:
+        d = ""
+    request.session['ajaxKey'] = hashlib.md5(sessid + d).hexdigest()[0:10]
+
+
 def validateAjaxRequest(request):
     if request.GET.get('ajaxKey', False) and request.GET.get('ajaxKey', False) == request.session.get('ajaxKey',''):
         return True

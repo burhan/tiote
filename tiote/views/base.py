@@ -69,7 +69,7 @@ class BareTableView(View):
         if hasattr(self, 'show_tbl_optns') and getattr(self, 'show_tbl_optns', False):
             tbl_optns_html = htm.table_options(
                 getattr(self, 'tbl_optn_type', 'data'),
-                with_keys = self.tbl_props.has_key('keys')
+                with_keys = self.tbl_props.has_key('keys') and len(self.tbl_props['keys'])
                 )
         else: tbl_optns_html = ''
 
@@ -126,5 +126,7 @@ class CompositeTableView(BareTableView):
 
 class BareFormView(View): pass
 
-class FormView(BareFormView): pass
+class FormView(BareFormView):
 
+    def get(self, request, *args, **kwargs):
+        pass

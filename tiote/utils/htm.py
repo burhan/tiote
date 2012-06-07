@@ -133,7 +133,7 @@ def generate_sidebar(request):
             li_pfx = " class='active'" if request.GET.get('tbl') == tbl_row else ''
             a = '<a class="icon-table tbl-link" href="#">%s</a>' % tbl_row
             sfx_list.append("<li{0}>{1}</li>".format(li_pfx, a))
-            
+        
         # generate the string to be returned. It has the following order
         # 1. h6 saying 'quick navigation'
         # 2. db selection select element and schm selection select element if dialect is postgresql
@@ -145,11 +145,13 @@ def generate_sidebar(request):
             '&schm=%s' % request.GET.get('schm') if request.GET.get('schm') else ''
             )
         ret_string = bck_lnk + '</h6>\
-<h6>quick nav:</h6><div class="sidebar-item"><img src="{4}/tt_img/databases.png" /> {0}</div>{1}{2}{3}'.format( 
-            db_selection_form, s, # 0 & 1
-            '<h6 class="placeholder">%ss:</h6>' % fns._abbr[request.GET.get('sctn')], # 2
-            "<ul>{0}</ul>".format( ''.join(sfx_list) ), # 3
-            static_addr # 4
+            <h6>quick nav:</h6><div class="sidebar-item"><img src="{url}/tt_img/databases.png" /> {db_select}</div>\
+            {schema_select}{placeholder_html}{tbl_list}'.format( 
+            db_select = db_selection_form, 
+            schema_select = s, # 0 & 1
+            placeholder_html = '<h6 class="placeholder">%ss:</h6>' % fns._abbr[request.GET.get('sctn')], # 2
+            tbl_list = "<ul>{0}</ul>".format( ''.join(sfx_list) ), # 3
+            url = static_addr # 4
         )
 
 #    return ret_string
