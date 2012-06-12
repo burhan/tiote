@@ -108,29 +108,6 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
 
         return r
         
-    elif query_type == 'browse_table':
-        # initializations        
-        sub_q_data = {'tbl': get_data['tbl'],'db':get_data['db']}
-        sub_q_data['offset'] = get_data['offset'] if get_data.has_key('offset') else 0
-        sub_q_data['limit'] = get_data['limit'] if get_data.has_key('limit') else getattr(settings, 'TT_MAX_ROW_COUNT', 100)
-        for item in ('schm', 'sort_key', 'sort_dir',):
-            if get_data.has_key(item): sub_q_data[item] = get_data[item]
-        # retrieve and run queries
-        keys = rpr_query(conn_params, 'primary_keys', sub_q_data)
-        count = sa.full_query(conn_params, 
-            sql.generate_query('count_rows', conn_params['dialect'], sub_q_data)[0],
-            )['rows']
-        r = sa.full_query(conn_params,
-            sql.generate_query(query_type, conn_params['dialect'], sub_q_data)[0]
-            )
-        # format and return data
-        if type(r) == dict:
-            r.update({'total_count': count[0][0], 'offset': sub_q_data['offset'],
-                'limit':sub_q_data['limit'], 'keys': keys})
-            return r
-        else:
-            return fns.http_500(r)
-
     # queries with dissimilar implementations 
     elif conn_params['dialect'] == 'mysql':
         
@@ -144,6 +121,29 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     else:
         return fns.http_500('dialect not supported!')
 
+def browse_table(conn_params, get_data={}, post_data={}):
+    # initializations
+    sub_q_data = {'tbl': get_data.get('tbl'),'db':get_data.get('db')}
+    sub_q_data['offset'] = get_data.get('offset') if get_data.has_key('offset') else 0
+    sub_q_data['limit'] = get_data.get('limit') if get_data.has_key('limit') else getattr(settings, 'TT_MAX_ROW_COUNT', 100)
+    for item in ('schm', 'sort_key', 'sort_dir',):
+        if get_data.has_key(item): sub_q_data[item] = get_data.get(item)
+    # retrieve and run queries
+    keys = rpr_query(conn_params, 'primary_keys', sub_q_data)
+    count = sa.full_query(conn_params, 
+        sql.generate_query('count_rows', conn_params['dialect'], sub_q_data)[0],
+        )['rows']
+    # get the table's row listing
+    r = sa.full_query(conn_params,
+        sql.generate_query('browse_table', conn_params['dialect'], sub_q_data)[0]
+        )
+    # format and return data
+    if type(r) == dict:
+        r.update({'total_count': count[0][0], 'offset': sub_q_data['offset'],
+            'limit':sub_q_data['limit'], 'keys': keys})
+        return r
+    else:
+        return fns.http_500(r)
 
 
 def fn_query(conn_params, query_name, get_data={}, post_data={}):

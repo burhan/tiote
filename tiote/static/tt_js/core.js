@@ -384,6 +384,7 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 		// attach the variables passed down as javascript objects to the 
 		// table object
 		html_table['vars'] = {}; var data;// containers
+		
 		if (tbl.get('data')) {
 			data = {}
 			tbl.get('data').split(';').each(function(d){
@@ -392,10 +393,11 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 			});
 			html_table['vars']['data'] = data; // schema: [key: value]
 		}
+		
 		if (tbl.get('keys')) {
-			data = []; // data[[1,2,3],...] indexes 1: name of column,
-							// 2 : index type
-							// 3 : column position in tr
+			data = []; // data[[0,1,2],...] indexes 0: name of column,
+							// 1 : index type
+							// 2 : column position in tr
 			tbl.get('keys').split(';').each(function(d){
 				var ar = d.split(':');
 				if (ar[0] != "") data.include(ar);
@@ -403,95 +405,97 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 			// loop through the tds int .tbl-header to see which corresponds to the keys
 			$$('.tbl-header table')[tbl_in].getElements('td').each(function(th, th_in){
 				for (var i = 0; i < data.length; i++) {
-					if ($(th).get('text') == data[i][0] )
+					var _colname = $E('div span.column-name', th);
+					if (_colname == null) 
+						continue;
+					if (_colname.get('text') == data[i][0] )
 						data[i].include(th_in);
 				}
 			});
 
 			html_table['vars']['keys'] = data; // schema: [column, key_type, column index]
+			
+			// handle a.display_row(s) click events
+			tbl.getElements('a.display_row').addEvent('click', function(e) {
+				var al_in = parseInt( e.target.getParent('tr').id.replace('row_', '') );
+				var where_stmt = generate_where(html_table, al_in, true);
+				// make xhr request
+				new XHR({
+					url: generate_ajax_url() + '&q=get_row&type=fn',
+					spinnerTarget: tbl,
+					onSuccess : function(text, xml) {
+						showDialog("Entry", text, {
+							offsetTop: null, width: 475, hideFooter: true,
+							overlayOpacity: 0, overlayClick: false
+						});
+					}
+				}).post(where_stmt);
+			});
 		}
 
-		// handle a.display_row(s) click events
-		tbl.getElements('a.display_row').each(function(al, al_in){
-			if (tbl.get('keys' != null)) {	// functionality requires keys
-				// attach click event
-				al.addEvent('click', function(e) {
-					var where_stmt = generate_where(html_table, al_in, true);
-					// make xhr request
-					new XHR({
-						url: generate_ajax_url() + '&q=get_row&type=fn',
-						spinnerTarget: tbl,
-						onSuccess : function(text, xml) {
-							showDialog("Entry", text, {
-								offsetTop: null, width: 475, hideFooter: true,
-								overlayOpacity: 0, overlayClick: false
-							});
-						}
-					}).post(where_stmt);
-				});
-			}
-		});
 	});
-		
+
 }
 
 
 Page.prototype.addTableOpts = function() {
 	// .table-options processing : row selection
-	if ($$('.table-options') != null && Object.keys(pg.tbls).length) {
-		$$('.table-options').each(function(tbl_opt, opt_in){
-			htm_tbl = pg.tbls[opt_in]; // short and understandable alias
-			// enable selection of rows
-			$(tbl_opt).getElements('a.selector').addEvent('click', function(e) {	
-				// loop through all the classes to find the "select_" class
-				e.target.get('class').split(' ').each(function(cl){
-					if (cl.contains('select_')) {
-						var option = cl.replace('select_', '').toLowerCase();
-						set_all_tr_state(htm_tbl, (option == 'all') ? true : false);
-					}
-				});
-			});
-			
-			// table's needing pagination
-			if (Object.keys(htm_tbl['vars']).contains('data')) {
-				var pg_htm = tbl_pagination( // pagination html
-					htm_tbl['vars']['data']['total_count'],
-					htm_tbl['vars']['data']['limit'], 
-					htm_tbl['vars']['data']['offset']
-				);
-				$(tbl_opt).getElement('p').adopt(pg_htm);
-			}
-			
-
-			// links that do something (edit, delete ...)
-			tbl_opt.getElements('a.doer').addEvent('click', function(e){
-				e.stop();
-				if (e.target.hasClass('action_refresh'))
-					// action to be performed is a page refresh
-					pg.loadPage(false)
-				else 
-					do_action(htm_tbl, e);
-			});
-			
-			// disable or enable if no row is selected or rows are selected respectively.
-			var needy_doer_options = function(tr, tr_all) {
-				if (tr_all.length) {
-					$$('a.needy_doer').setStyles({
-						'color': '#0069D6',
-						'cursor': 'pointer'
-					});
-				} else {
-					$$('a.needy_doer').setStyles({
-						'color': '#888', 
-						'cursor': 'default'
-					});
+	if ($$('.table-options') == null || ! Object.keys(pg.tbls).length)
+		return;
+	
+	$$('.table-options').each(function(tbl_opt, opt_in){
+		var htm_tbl = pg.tbls[opt_in]; // short and understandable alias
+		// enable selection of rows
+		$(tbl_opt).getElements('a.selector').addEvent('click', function(e) {	
+			// loop through all the classes to find the "select_" class
+			e.target.get('class').split(' ').each(function(cl){
+				if (cl.contains('select_')) {
+					var option = cl.replace('select_', '').toLowerCase();
+					set_all_tr_state(htm_tbl, (option == 'all') ? true : false);
 				}
-			}
-			
-			htm_tbl.addEvent('rowFocus', needy_doer_options).addEvent('rowUnfocus', needy_doer_options);
-			
+			});
 		});
-	}
+
+		// table's needing pagination
+		if (Object.keys(htm_tbl.vars).contains('data')) {
+			var pg_htm = tbl_pagination( // pagination html
+				htm_tbl['vars']['data']['total_count'],
+				htm_tbl['vars']['data']['limit'], 
+				htm_tbl['vars']['data']['offset']
+			);
+			$(tbl_opt).getElement('p').adopt(pg_htm);
+		}
+
+
+		// links that do something (edit, delete ...)
+		tbl_opt.getElements('a.doer').addEvent('click', function(e){
+			e.stop();
+			if (e.target.hasClass('action_refresh'))
+				// action to be performed is a page refresh
+//				pg.loadPage(false)
+				reloadPage();
+			else 
+				do_action(htm_tbl, e);
+		});
+
+		// disable or enable if no row is selected or rows are selected respectively.
+		var needy_doer_options = function(tr, tr_all) {
+			if (tr_all.length) {
+				$$('a.needy_doer').setStyles({
+					'color': '#0069D6',
+					'cursor': 'pointer'
+				});
+			} else {
+				$$('a.needy_doer').setStyles({
+					'color': '#888', 
+					'cursor': 'default'
+				});
+			}
+		}
+
+		htm_tbl.addEvent('rowFocus', needy_doer_options).addEvent('rowUnfocus', needy_doer_options);
+
+	});
 	
 }
 
@@ -538,7 +542,6 @@ function do_action(tbl, e) {
 			// default situation. translates to tbl view of section db
 			msg += where_stmt.contains(';') ? "tables" : "table";
 	}
-		
 	else if (navObject['sctn'] == "tbl") {
 		if (navObject['v'] == 'browse')
 			msg += where_stmt.contains(';') ? "rows" : "row";
@@ -570,7 +573,7 @@ function do_action(tbl, e) {
 						if (resp['status'] == "fail") {
 							showDialog("Action not successful", resp['msg']);
 						} else if (resp['status'] == 'success')
-							pg.reload();
+							reloadPage();
 					}
 				}).post({'where_stmt': where_stmt});
 			}
@@ -590,7 +593,9 @@ Page.prototype.browseView = function() {
 	theads.each(function(thead, thead_in){
 		// add click event
 		thead.addEvent('click', function(e){
-			var o = page_hash();var key = thead.get('text');var dir = '';
+			var _colname = $E('div span.column-name', thead);
+			var key = (_colname) ? _colname.get('text') : '';
+			var o = page_hash(); var dir = '';
 			if (o.sort_key != undefined && o.sort_key != key ) {
 				dir = 'asc'
 			} else {

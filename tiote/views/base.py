@@ -63,7 +63,7 @@ class BareTableView(View):
             attribs = getattr(self, 'tbl_attribs', {}),
             store = getattr(self, 'tbl_store',{}),
             assoc_order = getattr(self, 'tbl_assoc_order', None),
-            **kwargs
+            columns_desc = getattr(self, 'columns_desc', []),
             )
 
         if hasattr(self, 'show_tbl_optns') and getattr(self, 'show_tbl_optns', False):

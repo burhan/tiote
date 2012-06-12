@@ -257,7 +257,9 @@ function where_from_selected(tbl) {
 	selected_rows.each(function(sel_row, sel_row_in){
 		var id = parseInt(sel_row.id.replace('row_',''));
 		stmt += generate_where(tbl, id);
-		if (sel_row_in != selected_rows.length - 1) stmt += ';';
+		// if there are more rows add statement delimiter
+		if (sel_row_in != selected_rows.length - 1)
+			stmt += ';';
 	});
 	return stmt;
 }

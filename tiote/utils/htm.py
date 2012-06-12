@@ -126,6 +126,7 @@ def generate_sidebar(request):
         # table selection ul
         # table_list = qry.rpr_query(conn_params, 'existing_tables', fns.qd(request.GET))
         table_list = sa.get_table_names(conn_params, request.GET)
+        table_list.sort() # noted that the list is sometimes not sorted from postgresql
         sfx_list = []
         pg_sfx = '&schm=' + _dict['schm'] if conn_params['dialect']=='postgresql' else ''
         for tbl_row in table_list:
@@ -148,10 +149,10 @@ def generate_sidebar(request):
             <h6>quick nav:</h6><div class="sidebar-item"><img src="{url}/tt_img/databases.png" /> {db_select}</div>\
             {schema_select}{placeholder_html}{tbl_list}'.format( 
             db_select = db_selection_form, 
-            schema_select = s, # 0 & 1
+            schema_select = s,
             placeholder_html = '<h6 class="placeholder">%ss:</h6>' % fns._abbr[request.GET.get('sctn')], # 2
-            tbl_list = "<ul>{0}</ul>".format( ''.join(sfx_list) ), # 3
-            url = static_addr # 4
+            tbl_list = "<ul>{0}</ul>".format( ''.join(sfx_list) ),
+            url = static_addr
         )
 
 #    return ret_string
@@ -181,7 +182,10 @@ class HtmlTable():
     </div>
     '''
 
-    def __init__(self, columns=[], rows=[], attribs={}, props={}, store={}, assoc_order=None, static_addr = "", **kwargs):
+    def __init__(self, columns=[], rows=[], attribs={}, props={}, store={}, 
+            assoc_order=None, static_addr = "",
+            columns_desc=[], # displayed under the columns has help message
+            **kwargs):
         self.props = props
         self.tbody_chldrn = []
         # build attributes
@@ -197,17 +201,28 @@ class HtmlTable():
             self.keys_list = self._build_keys_list(self.props['keys'])
             self.keys_column = [x[0] for x in self.props['keys']]
         # build <thead><tr> children
+        self.columns_desc = columns_desc
         if columns is not None:
             self.columns = columns
+
+            for _in in range(len(columns)):
+                if len(columns_desc):
+                # if there is a columns_desc list as a keyword argument to this function
+                # append its contents to the columns by index (it has being formatted here)
+                    # index 1 of each tuple in columns_desc holds the datatype of the table
+                    columns[_in] = '<span class="column-name">%s</span><br /><span class="column-desc">%s</span>' %  (
+                        columns[_in], columns_desc[_in][1])
+                else:
+                    columns[_in] = '<span class="column-name">%s</span>' % columns[_in]
+
             hd_list = ["<td class='controls'><div></div></td>"]
-            if assoc_order is not None:
-                self.assoc_order = assoc_order
-                # re arrange the order of columns
-                for _i in assoc_order:
-                    hd_list.append('<td><div>%s</div></td>' % columns[_i])
-            else:
-                for head in columns:
-                    hd_list.append('<td><div>%s</div></td>' % head)
+
+            # default order of columns is their index in the list 'columns'
+            self.assoc_order = assoc_order if assoc_order else range(len(columns))
+            # re arrange the order of columns
+            for _i in self.assoc_order:
+                hd_list.append('<td><div>%s</div></td>' % columns[_i])
+        
             # empty td 
             hd_list.append('<td class="last-td"></td>')
             self.thead_chldrn = hd_list
@@ -289,8 +304,9 @@ class HtmlTable():
         self.tbody_chldrn.append(row_list)
     
     def to_element(self):
-        thead = u'<div class="tbl-header"><table><tbody><tr>{0}</tr></tbody></table></div>'.format(
-            u''.join(self.thead_chldrn)
+        thead = u'<div class="tbl-header"><table><tbody><tr{1}>{0}</tr></tbody></table></div>'.format(
+            u''.join(self.thead_chldrn),
+            ' class="has-column-desc"' if len(self.columns_desc) else ''
         )
 
         tbody = u'<div class="tbl-body"><table{0}{1}{2}><tbody>{3}</tbody></table></div>'.format(

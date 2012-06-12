@@ -230,6 +230,11 @@ a:hover {
 /*
 	JSIFIED TABLE
 */
+.jsifyTable .tbl-header * {
+	margin: 0;
+	padding: 0;
+}
+
 table.sql {
     border: medium none;
     display: block;
@@ -249,6 +254,23 @@ table.sql * {
     font-weight: normal;
     padding: 2px;
 	text-align: center;
+}
+
+/* set by HtmlTable only when the table has column_desc set in its arguments lists.
+	reducing the line-height to 13px (from 16px) makes it look better
+*/
+.tbl-header tr.has-column-desc td {
+	line-height: 13px;
+}
+
+.tbl-header table .column-desc {
+	color: #a9a9a9;
+	font-size:11px;
+}
+
+.tbl-header td div {
+	padding-top: 2px;
+	padding-bottom: 2px;
 }
 table.sql thead div span {
     margin: 0;
@@ -300,10 +322,7 @@ table.sql tr.table-tr-selected td {
 table.sql tr:last-child {
 	border-bottom: none;
 }
-.jsifyTable .tbl-header * {
-	margin: 0;
-	padding: 0;
-}
+
 
 .jsifyTable {
 	margin-right: -10px;

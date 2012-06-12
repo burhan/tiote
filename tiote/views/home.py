@@ -31,16 +31,19 @@ def home(request):
         # 'form':form, 
         'variables':qry.get_home_variables(request)
     }
+    
     try:
         # get version information
-        conn = httplib.HTTPSConnection("github.com", timeout=10) # should be change to github project page
+        conn = httplib.HTTPSConnection("raw.github.com", timeout=5) # should be change to github project page
                                                                 # only stable static link available
-        conn.request("GET", "/dumb906/tiote/raw/master/docs/changelog.rst") # path to changelog
+        conn.request("GET", "/dumb906/tiote/master/docs/changelog.rst") # path to changelog
         r = conn.getresponse()
         if r.status != httplib.OK:
-            raise Exception # the exception would be caught by an empty except block
+            raise Exception('response status: %d' % r.status) # the exception would be caught by an empty except block
                             # skips the else block if the response status is not 200
-    except Exception: pass
+    except Exception as e:
+        # raise e
+        pass
     else :
         lines = r.read().split("\n")
         for i in xrange(0, len( lines) ):
@@ -105,7 +108,7 @@ def dbs(request):
     }
 
     if conn_params['dialect'] == 'postgresql':
-        props['go_link_dest'] = '#sctn=db&v=ov&db=%s&schm=' + sa.get_default_schema(request)
+        props['go_link_dest'] = '#sctn=db&v=ov&db=%s&schm=' + sa.get_default_schema(conn_params)
 
     c = base.TableView(tbl_data=tbl_data, tbl_props=props, show_tbl_optns=True, tbl_optn_type='db',
         empty_err_msg="This server has no databases", 

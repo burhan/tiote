@@ -21,16 +21,18 @@ def browse(request):
         else:
             return edit(request)
     
-    tbl_data = qry.rpr_query(conn_params, 'browse_table',
-        fns.qd(request.GET), fns.qd(request.POST))
-    
+    tbl_data = qry.browse_table(conn_params, request.GET, request.POST)
+    # table structure would be used as description for the individual columns
+    tbl_structure = qry.rpr_query(conn_params, 'table_structure', request.GET)['rows']
+    # build table
     c = base.TableView(tbl_data=tbl_data,
         tbl_props = {'with_checkboxes': True, 'display_row': True, },
         tbl_store = {'total_count':tbl_data['total_count'], 'offset': tbl_data['offset'],
             'limit': tbl_data['limit'] },
         show_tbl_optns = True,
         tbl_optn_type='data',
-        empty_err_msg="This table contains no items"
+        empty_err_msg="This table contains no items",
+        columns_desc=tbl_structure,
         )
     return c.get(request)
 
@@ -63,7 +65,9 @@ def base_struct(request, **kwargs):
 
 
 def cols_struct(request):
+    # inits and first queries
     conn_params = fns.get_conn_params(request, update_db=True)
+
 
     # column editing/deleting
     if request.method == 'POST' and request.GET.get('upd8'):
@@ -82,9 +86,12 @@ def cols_struct(request):
 
     # table view
     tbl_cols = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
-    return base_struct(request, tbl_data=tbl_cols, show_tbl_optns=True,
+    http_resp = base_struct(request, tbl_data=tbl_cols, show_tbl_optns=True,
         tbl_props= {'keys': (('column', 'key'), )}, tbl_optn_type='tbl_like',
         subv='cols', empty_err_msg="Table contains no columns")
+
+    return http_resp
+
 
 
 def idxs_struct(request):
@@ -200,7 +207,6 @@ def edit(request):
                 {'form': f}, is_file=True).replace('\n','')
             }
             return HttpResponse(json.dumps(ret))
-
 
 
 # view router
