@@ -9,9 +9,8 @@ from sqlalchemy.engine.url import URL
 
 
 def _get_engine(conn_params,):
-    _engine = create_engine(get_conn_link(conn_params),
-            pool_size=20) # abitrary size: the size was picked up from the SA's docs    
-    return _engine
+    return create_engine(get_conn_link(conn_params),
+            pool_size=20) # abitrary size: the size was picked up from the SA's docs
 
 # columns things
 
@@ -69,7 +68,7 @@ def model_login(login_params):
     login_params['dialect'] = login_params.pop('database_driver')
     if not login_params['db'] and login_params['dialect'] == 'postgresql':
         login_params['db'] = 'postgres'
-    engine = create_engine( get_conn_link(login_params) )
+    engine = _get_engine(login_params)
     dict_ret = {}
     try:
         conn = engine.connect()

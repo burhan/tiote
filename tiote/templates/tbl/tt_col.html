@@ -1,0 +1,51 @@
+<div class='row'><div class='span9'><div class='small-form-container'>
+    <h5 class="heading">Add New Column</h5>
+	<form id='tt_form' class="variable_form" action="" method="post" accept-charset="utf-8">
+		{% csrf_token %}
+		<table class='compact-form' style='margin-top:-10px;'><tbody>
+	  	{% for field in form %}
+	  		{% comment %} field 'insert_position' must be the last field and has some special styling {% endcomment %}
+	  		{% if field.name == 'insert_position' %}
+	  		{% comment %} field 'values' are hidden until it is needed {% endcomment %}
+	    	
+	    	{% elif field.label == 'values' %}
+	    		<tr class='hidden values-needed'><td>{{field.label_tag}}</td><td>{{field}}</td><td colspan='2'>{{field.help_text}}</td></tr>
+
+			{% elif field.name not in table_fields and field.label not in odd_fields %}
+				<tr><td class="input-header">{{field.label_tag}}<td class="contains-input">{{field}}</td>
+
+			{% elif field.name not in table_fields and field.label in odd_fields %}
+				<td class="input-header">{{field.label_tag}}</td><td class="contains-input">{{field}}</td></tr>
+			{% endif %}
+	    {% endfor %}
+	    </tbody></table>
+	  <div class="form-controls" style="margin-top:-10px;">
+	  	<p class='pull-left'>
+	  		<label for='id_insert_position' style='margin-right:30px;margin-left:-20px'>{{ form.insert_position.label }}</label>
+	  		{{ form.insert_position}}
+	  	</p>
+	    <input type="submit" class='pull-right btn primary submit-button' value="Submit &rarr;" style='margin-right:50px' />
+	  </div>
+	</form>
+</div></div></div>
+
+<script type="text/javascript" ajaxKey="{{ajaxKey}}" charset="utf-8">
+	// this scripts makes the insert_position field lists itself horizontally
+	// instead of verticall which is the default
+	if (! $E('table.compact-form td ul'))
+		return;
+
+	var j = $E('table.compact-form td ul'); // the first ul elmnt corresponds to the 'insert_position' field
+	var con = new Elements();
+	j.getChildren().each(function(item, key) {
+		con.include(item.getChildren()[0]); 
+	});
+	j.getParent('tr').adopt(new Element('td', {
+		'colspan' : 5,
+		'class' : 'occupy'
+	}).adopt(con));
+	j.getParent().destroy();
+</script>
+
+<div id='undisplayed_result' class='hidden' style="display:none;"></div>
+<div id='sidebar_data' class='hidden'>{{sidebar|safe}}</div>

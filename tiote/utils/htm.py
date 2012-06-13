@@ -199,7 +199,7 @@ class HtmlTable():
         self.keys_list = []
         if self.props.has_key('keys'):
             self.keys_list = self._build_keys_list(self.props['keys'])
-            self.keys_column = [x[0] for x in self.props['keys']]
+            self.keys_column = [x[0] for x in self.props['keys']] # index 0 corresponds to column name
         # build <thead><tr> children
         self.columns_desc = columns_desc
         if columns is not None:

@@ -1,10 +1,11 @@
 
-function generate_ajax_url(withAjaxKey,extra_data, prefix) {
-	extra_data = extra_data || {};
+function generate_ajax_url(prefix
+//		, extra_data
+		) {
+//	extra_data = extra_data || {};
 	prefix = prefix || "";
-	withAjaxKey = withAjaxKey || false;
 	var n = new Hash( page_hash() );
-	n.extend(extra_data);
+//	n.extend(extra_data);
 	var request_url = 'ajax/?' + prefix;
 	var keys = Object.keys(n);
 	
@@ -16,7 +17,6 @@ function generate_ajax_url(withAjaxKey,extra_data, prefix) {
 			request_url += '&' + key + '=' + n[key];
 	}
 
-	if (withAjaxKey) request_url += '&ajaxKey=' + _ajaxKey;
 	return request_url
 }
 
@@ -77,18 +77,19 @@ function runXHRJavascript(){
 	var scripts = $ES("script", 'rightside');
 	for (var i=0; i<scripts.length; i++) {
 		// basic xss prevention
-		if (scripts[i].get("ajaxKey") == _ajaxKey) {
-			var toRun = scripts[i].get('html');
-			var newScript = new Element("script");
-			newScript.set("type", "text/javascript");
-			if (!Browser.ie) {
-				newScript.innerHTML = toRun;
-			} else {
-				newScript.text = toRun;
-			}
-			document.body.appendChild(newScript);
-			document.body.removeChild(newScript);
+		if (scripts[i].get("ajaxKey") == _ajaxKey)
+			return;
+		
+		var toRun = scripts[i].get('html');
+		var newScript = new Element("script");
+		newScript.set("type", "text/javascript");
+		if (!Browser.ie) {
+			newScript.innerHTML = toRun;
+		} else {
+			newScript.text = toRun;
 		}
+		document.body.appendChild(newScript);
+		document.body.removeChild(newScript);
 	}
 }
 

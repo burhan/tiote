@@ -198,15 +198,112 @@ class QueryForm(forms.Form):
         widget = forms.Textarea(attrs={'class':'required span10','rols':0, 'cols':0, 'style':'height:100px;resize:none;'},) )
 
 
-def get_dialect_form(form_cls, dialect):
+class BaseColumnForm(forms.BaseForm):
     '''
-    structure of dialect_forms:
-        { 'form_cls': [ postgresql version of form_cls, mysql version of form_cls] }
+    abstract class to which houses the common code between ColumnForm and TableForm
     '''
-    dialect_forms = {
-        'DbForm': [pgsqlDbForm, mysqlDbForm],
-        'UserForm': [pgsqlUserForm, mysqlUserForm],
-        'TableForm': [pgsqlTableForm, mysqlTableForm],
-    }
     
-    return dialect_forms[form_cls][0] if dialect == 'postgresql' else dialect_forms[form_cls][1]
+    def __init__(self, dialect, engines=[], charsets=[], column_form_count=1, 
+        existing_tables = [], existing_columns = None, **kwargs):
+        f = SortedDict()
+        # variable amount of column_form_count
+        # field label's are directly tied to the corresponding template
+        for i in range( column_form_count ):
+            sufx = '_' + str(i)
+            f['name'+sufx] = forms.CharField(
+                widget=forms.TextInput(attrs={'class':'required'}),
+                label = 'name')
+
+            types = pgsql_types if dialect == 'postgresql' else mysql_types
+            f['type'+sufx] = forms.ChoiceField(
+                choices = fns.make_choices(types),
+                widget = forms.Select(attrs={'class':'required needs:values:set|enum select_requires:values'
+                    +sufx+':set|enum select_requires:size'+sufx+':varchar'}),
+                initial = 'varchar',
+                label = 'type',
+            )
+            # this field is only displayed when the type field is set to one of any types
+            # that needs this e.g. (enum and set)
+            f['values'+sufx] = forms.CharField(
+                label = 'values', required = False, 
+                help_text="Enter in the format: ('yes','false')",
+            )
+            f['size'+sufx] = forms.IntegerField(
+                widget=forms.TextInput(attrs={'class':'validate-integer'}),
+                label = 'size', required=False, )
+            f['key'+sufx] = forms.ChoiceField(
+                required = False,
+                widget = forms.Select(attrs={'class':'even'}),
+                choices = fns.make_choices(key_choices),
+                label = 'key',
+            )
+            f['default'+sufx] = forms.CharField(
+                required = False,
+                label = 'default',
+                widget=forms.TextInput
+            )
+            if dialect == 'mysql':
+                f['charset'+sufx] = forms.ChoiceField(
+                    choices = fns.make_choices(charsets), 
+                    initial='latin1',
+                    label = 'charset',
+                    widget=forms.Select(attrs={'class':'required'})
+                )
+
+            other_choices = mysql_other_choices if dialect == 'mysql' else ('not null',)
+            f['other'+sufx] = forms.MultipleChoiceField(
+                choices = fns.make_choices(other_choices, True),
+                widget = tt_CheckboxSelectMultiple(attrs={'class':'occupy'}),
+                required = False,
+                label = 'other',
+            )
+
+        # complete form creation process
+        self.base_fields = f
+        forms.BaseForm.__init__(self, **kwargs)
+
+
+class TableForm(BaseColumnForm):
+
+    def __init__(self, **kwargs):
+        BaseColumnForm.__init__(self, dialect, **kwargs)
+        # store the previous contents of self.fields and start again: achieves desired ordering of fields
+        _temp = self.fields
+        self.fields = SortedDict()
+
+        self.fields['name'] = forms.CharField(widget=forms.TextInput(attrs={'class':'required'}))
+
+        if dialect == 'mysql':
+
+            self.fields['charset'] = forms.ChoiceField(
+                choices = fns.make_choices(charsets),
+                initial='latin1'
+            )
+
+            engine_list, default_engine = [], ''
+            for tup in engines:
+                engine_list.append((tup[0],))
+                if tup[1] == 'DEFAULT':
+                    default_engine = tup[0]
+
+            self.fields['engine'] = forms.ChoiceField(
+                required = False, 
+                choices = fns.make_choices( engine_list ),
+                initial = default_engine
+            )
+        self.fields.update(_temp)
+
+
+class ColumnForm(BaseColumnForm):
+
+    def __init__(self, dialect, existing_columns=[], **kwargs):
+        BaseColumnForm.__init__(self, dialect, **kwargs)
+
+        self.fields['insert_position'] = forms.ChoiceField(
+            choices = fns.make_choices(['at the end of the table', 'at the beginning'], True)
+                + fns.make_choices(existing_columns,False,'--------','after'),
+            label = 'insert this column',
+            initial = 'at the end of the table',
+            widget = forms.Select(attrs={'class':'required'}),
+        )
+

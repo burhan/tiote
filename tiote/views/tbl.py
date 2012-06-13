@@ -67,7 +67,15 @@ def base_struct(request, **kwargs):
 def cols_struct(request):
     # inits and first queries
     conn_params = fns.get_conn_params(request, update_db=True)
-
+    # only needed in the MySQL dialect
+    if conn_params['dialect'] == 'mysql':
+        charset_list = qry.common_query(conn_params, 'charset_list')['rows']
+        supported_engines = qry.common_query(conn_params, 'supported_engines')['rows']
+    else:
+        supported_engines = None
+        charset_list = None
+    tbl_names = sa.get_table_names(conn_params, request.GET)
+    tbl_cols = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
 
     # column editing/deleting
     if request.method == 'POST' and request.GET.get('upd8'):
@@ -85,13 +93,24 @@ def cols_struct(request):
             return qry.rpr_query(conn_params, q, query_data)
 
     # table view
-    tbl_cols = qry.rpr_query(conn_params, 'table_structure', fns.qd(request.GET))
+    
     http_resp = base_struct(request, tbl_data=tbl_cols, show_tbl_optns=True,
         tbl_props= {'keys': (('column', 'key'), )}, tbl_optn_type='tbl_like',
         subv='cols', empty_err_msg="Table contains no columns")
 
-    return http_resp
+    # return http_resp
 
+    form = forms.ColumnForm(conn_params['dialect'], engines=supported_engines, charsets=charset_list,
+        existing_tables=tbl_names, existing_columns=tbl_cols['rows'], label_suffix=':')
+
+    form_html= fns.render_template(request, 'tbl/tt_col.html', context={'form': form, 'edit':False,
+        'table_fields': ['name', 'engine', 'charset', 'inherit', 'of_type'],
+        'odd_fields': ['type','key','charset', 'column', 'on delete'],
+        # 'table_with_columns': table_with_columns,
+        }, is_file=True)
+
+    http_resp.content += form_html
+    return http_resp
 
 
 def idxs_struct(request):

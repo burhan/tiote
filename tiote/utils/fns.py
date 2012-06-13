@@ -154,7 +154,7 @@ def render_template(request, template, context= {}, is_file=False):
     Helper function which uses ``request`` to get the RequestContext which is used 
     to provide extras context and renders the given template.
     '''
-    _context = RequestContext(request, [site_proc])
+    _context = RequestContext(request, {}, [site_proc])
     if len(context) > 0: _context.update(context)
     t = loader.get_template(template) if is_file else Template(template) 
     return t.render(_context)

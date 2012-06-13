@@ -54,7 +54,8 @@ def tbl_overview(request):
 
     # generate view data
     get_data = fns.qd(request.GET)
-    if not get_data.has_key('schm'): get_data['schm'] = 'public'
+    if conn_params['dialect'] == 'postgresql' and not get_data.has_key('schm'):
+        get_data['schm'] = sa._get_default_schema(conn_params)
     tbl_data = qry.rpr_query(conn_params, 'table_rpr', get_data)
 
     # setup url_prfx with SortedDict to maintain structure

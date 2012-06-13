@@ -265,7 +265,7 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 	if (clear_sidebar != true) return;
 	
 	new XHR({
-		url : generate_ajax_url(false, {}, '&q=sidebar&type=repr'),
+		url : generate_ajax_url('q=sidebar&type=repr'),
 		method: 'get',
 		onSuccess: function(text,xml){
 			// if the sidebar contains elements destroy them
@@ -421,7 +421,7 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 				var where_stmt = generate_where(html_table, al_in, true);
 				// make xhr request
 				new XHR({
-					url: generate_ajax_url() + '&q=get_row&type=fn',
+					url: generate_ajax_url('q=get_row&type=fn') ,
 					spinnerTarget: tbl,
 					onSuccess : function(text, xml) {
 						showDialog("Entry", text, {
@@ -566,7 +566,7 @@ function do_action(tbl, e) {
 				edit_view(where_stmt);
 			} else {
 				new XHR({
-					url: generate_ajax_url(false, {}) + '&upd8=' + action,
+					url: generate_ajax_url() + '&upd8=' + action,
 					spinnerTarget: $(tbl), 
 					onSuccess: function(text, xml) {
 						var resp = JSON.decode(text);
@@ -682,7 +682,7 @@ Page.prototype.completeForm = function(dialog_handler){
 			e.stop(); // stop propagation of event and also prevent default
 			// submit the values of the form
 			new XHR({
-				url: generate_ajax_url(false, {}),
+				url: generate_ajax_url(),
 				spinnerTarget: form,
 				onSuccess: onFormResponse
 			}).post(form.toQueryString());

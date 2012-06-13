@@ -121,6 +121,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     else:
         return fns.http_500('dialect not supported!')
 
+
 def browse_table(conn_params, get_data={}, post_data={}):
     # initializations
     sub_q_data = {'tbl': get_data.get('tbl'),'db':get_data.get('db')}
@@ -338,7 +339,7 @@ def get_dependencies(conn_params, get_data={}): # might later be extended for ob
     # columns in totl_deps are u'deptype', u'classid', u'relkind', u'adbin', u'adsrc', u'type', 
     #                           u'ownertable', u'refname', u'nspname'
     # raise Exception(totl_deps)
-    columns = ('type', 'name', 'restriction',)
+    columns = ['type', 'name', 'restriction',]
     
     tbl_data_rows = []
     for row in totl_deps['rows']:
@@ -387,3 +388,44 @@ def get_dependencies(conn_params, get_data={}): # might later be extended for ob
     return {'count': totl_deps['count'], 'columns': columns, 
         'rows': tbl_data_rows
     }
+
+
+def col_defn(col_data, sfx):
+    '''
+    used with iterations, sfx = str(i) where i is index of current iterations
+    returns individual column creation statement; excludes indexes and keys
+    '''
+    
+    sub_q = ' {name_'+sfx+'} {type_'+sfx+'}'
+    # types with binary
+    if col_data['type_'+sfx] in ['tinytext','text','mediumtext','longtext']:
+        sub_q += ' BINARY' if 'binary' in col_data['other_'+sfx] else ''
+    # types with length
+    if col_data['type_'+sfx] in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
+                      'real','double','float','decimal','numeric','char','varchar',
+                      'binary','varbinary']:
+        sub_q += '({size_'+sfx+'})' if col_data['size_'+sfx] else ''
+    # types with unsigned
+    if col_data['type_'+sfx] in ['tinyint','smallint','mediumint','int','integer','bigint',
+                      'real','double','float','decimal','numeric']:
+        sub_q += ' UNSIGNED' if 'unsigned' in col_data['other_'+sfx] else ''
+    # types needing values
+    if col_data['type_'+sfx] in ['set','enum']:
+        sub_q += ' {values_'+sfx+'}' if col_data['values_'+sfx] else ''
+    # types needing charsets
+    if col_data['type_'+sfx] in ['char','varchar','tinytext','text',
+                            'mediumtext','longtext','enum','set']:
+        sub_q += ' CHARACTER SET {charset_'+sfx+'}'
+    # some options
+    sub_q += ' NOT NULL' if 'not null' in col_data['other_'+sfx] else ' NULL'
+    s_d = col_data['default_'+sfx]
+    if s_d:
+        if col_data['type_'+sfx] not in ['tinyint','smallint','mediumint','int','integer','bigint',
+                          'bit','real','double','float','decimal','numeric']:
+            sub_q += ' DEFAULT \''+s_d+'\''
+        else:
+            sub_q += ' DEFAULT '+s_d+''
+#                    sub_q += ' DEFAULT {default_'+sfx+'}' if col_data['default_'+sfx] else ''
+    sub_q += ' AUTO_INCREMENT' if 'auto increment' in col_data['other_'+sfx] else ''
+    return sub_q
+

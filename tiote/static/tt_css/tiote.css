@@ -364,6 +364,7 @@ input[type="text"], textarea, select {
     font-family: mono;
     font-size: 12px;
 	box-shadow: none;
+	padding: 2px;
 }
 
 input:focus, textarea:focus {
@@ -404,10 +405,40 @@ fieldset {
 form.form-stacked label {
     font-weight: normal;
     text-transform: lowercase;
+    font-size: 12px;
 }
 form.form-stacked label span.help_text {
     color: #AAAAAA;
-	font-size: 12px;
+	font-size: 11px;
 	margin-left: 15px;
 	vertical-align: middle;
+}
+
+
+table.compact-form td, table.compact-form, table.compact-form th {
+    border: medium none;
+    padding: 2px;
+    /*padding-top: 2px;*/
+    padding-bottom: 5px;
+}
+
+table.contact-form td:first-child {
+	padding-top: 5px;
+}
+
+table.compact-form td label {
+    width: auto;
+    font-size: 12px;
+}
+
+table.compact-form td label span {
+	vertical-align: top;
+}
+
+table.compact-form td.occupy label {
+    padding-right: 20px;
+}
+
+.contains-input input, select {
+	width: 180px;
 }
