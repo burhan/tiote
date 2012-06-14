@@ -1,6 +1,7 @@
 from django import forms
 from django.core import validators
 from django.utils.datastructures import SortedDict
+from django.utils.safestring import SafeUnicode
 
 from tiote.utils import *
 # children modules (in files) of this module
@@ -198,6 +199,56 @@ class QueryForm(forms.Form):
         widget = forms.Textarea(attrs={'class':'required span10','rols':0, 'cols':0, 'style':'height:100px;resize:none;'},) )
 
 
+class pgTypeWidget(forms.MultiWidget):
+
+    def __init__(self, first_widget, second_widget):
+        widgets = (first_widget, second_widget)
+        super(pgTypeWidget, self).__init__(widgets, None)
+
+    def decompress(self, value):
+        if value:
+            return value.split('|')
+        return [None, None]
+
+    def render(self, name, value, attrs=None):
+        '''
+        forcing td elements to be part of the rendered output
+        ''' 
+        _temp = super(pgTypeWidget, self).render(name, value, attrs)
+        _l = _temp.split(u'</select><')
+        o = u'<td class="contains-input">{first_form}</td><td class="contains-input">{second_form}</td></tr>'
+        o = o.format(
+            first_form = _l[0] + u'</select>',
+            second_form = u'<' + _l[1]
+            )
+        return SafeUnicode(o)
+
+
+class pgTypeField(forms.MultiValueField):
+    # widget = pgTypeWidget()
+
+    def __init__(self, first_field, *args, **kwargs):
+
+        fields = (
+            first_field,
+            forms.ChoiceField(
+                choices = ( 
+                    ("default", "",), # made the empty string to contain something to bypass
+                                      # non-empty validation test
+                    ("[]","[]") 
+                ),
+                widget = forms.Select(attrs={'style':'width:40px;'}),
+                required = False, 
+                ),
+        )
+
+        self.widget = pgTypeWidget(fields[0].widget, fields[1].widget)
+        super(pgTypeField, self).__init__(fields, *args, **kwargs)
+
+    def compress(self, data_list):
+        return "|".join(data_list)
+
+
 class BaseColumnForm(forms.BaseForm):
     '''
     abstract class to which houses the common code between ColumnForm and TableForm
@@ -214,14 +265,25 @@ class BaseColumnForm(forms.BaseForm):
                 widget=forms.TextInput(attrs={'class':'required'}),
                 label = 'name')
 
-            types = pgsql_types if dialect == 'postgresql' else mysql_types
-            f['type'+sufx] = forms.ChoiceField(
-                choices = fns.make_choices(types),
-                widget = forms.Select(attrs={'class':'required needs:values:set|enum select_requires:values'
-                    +sufx+':set|enum select_requires:size'+sufx+':varchar'}),
-                initial = 'varchar' if dialect =='mysql' else 'character varying',
-                label = 'type',
-            )
+            if dialect == 'postgresql':
+                type_choice = forms.ChoiceField(
+                    choices = fns.make_choices(pgsql_types),
+                    widget = forms.Select(attrs={'class':'required'}),
+                    initial = 'character varying'
+                    )
+                
+                f['type' + sufx] = pgTypeField(type_choice,
+                    label = 'type', required=True,
+                    )
+
+            elif dialect == 'mysql':
+                f['type'+sufx] = forms.ChoiceField(
+                    choices = fns.make_choices(mysql_types),
+                    widget = forms.Select(attrs={'class':'required needs:values:set|enum select_requires:values'
+                        +sufx+':set|enum select_requires:size'+sufx+':varchar'}),
+                    initial = 'varchar',
+                    label = 'type',
+                )
             # this field is only displayed when the type field is set to one of any types
             # that needs this e.g. (enum and set)
             f['values'+sufx] = forms.CharField(
@@ -242,7 +304,11 @@ class BaseColumnForm(forms.BaseForm):
                 label = 'default',
                 widget=forms.TextInput
             )
-            if dialect == 'mysql':
+            if dialect == 'postgresql':
+                f['not_null_'+sufx] = forms.BooleanField(
+                    required=False, label='not null')
+
+            elif dialect == 'mysql':
                 f['charset'+sufx] = forms.ChoiceField(
                     choices = fns.make_choices(charsets), 
                     initial='latin1',
@@ -250,13 +316,13 @@ class BaseColumnForm(forms.BaseForm):
                     widget=forms.Select(attrs={'class':'required'})
                 )
 
-            other_choices = mysql_other_choices if dialect == 'mysql' else ('not null',)
-            f['other'+sufx] = forms.MultipleChoiceField(
-                choices = fns.make_choices(other_choices, True),
-                widget = tt_CheckboxSelectMultiple(attrs={'class':'occupy'}),
-                required = False,
-                label = 'other',
-            )
+                f['other'+sufx] = forms.MultipleChoiceField(
+                    choices = fns.make_choices(mysql_other_choices, True),
+                    widget = tt_CheckboxSelectMultiple(attrs={'class':'occupy'}),
+                    required = False,
+                    label = 'other',
+                )
+
 
         # complete form creation process
         self.base_fields = f
@@ -299,11 +365,12 @@ class ColumnForm(BaseColumnForm):
     def __init__(self, dialect, existing_columns=[], **kwargs):
         BaseColumnForm.__init__(self, dialect, **kwargs)
 
-        self.fields['insert_position'] = forms.ChoiceField(
-            choices = fns.make_choices(['at the end of the table', 'at the beginning'], True)
-                + fns.make_choices(existing_columns,False,'--------','after'),
-            label = 'insert this column',
-            initial = 'at the end of the table',
-            widget = forms.Select(attrs={'class':'required'}),
-        )
+        if dialect == 'mysql':
+            self.fields['insert_position'] = forms.ChoiceField(
+                choices = fns.make_choices(['at the end of the table', 'at the beginning'], True)
+                    + fns.make_choices(existing_columns,False,'--------','after'),
+                label = 'insert this column',
+                initial = 'at the end of the table',
+                widget = forms.Select(attrs={'class':'required'}),
+            )
 

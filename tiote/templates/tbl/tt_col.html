@@ -23,7 +23,10 @@ h5.heading {
 	    		<tr class='hidden values-needed'><td>{{field.label_tag}}</td><td>{{field}}</td><td colspan='2'>{{field.help_text}}</td></tr>
 
 			{% elif field.name not in table_fields and field.label not in odd_fields %}
-				<tr><td class="input-header">{{field.label_tag}}<td class="contains-input">{{field}}</td>
+				<tr><td class="input-header">{{field.label_tag}}<td class="contains-input">{{field|safe}}</td>
+
+			{% elif dialect == 'postgresql' and field.label == 'type' %}
+			 <td class="input-header">{{field.label_tag}}{{field}}
 
 			{% elif field.name not in table_fields and field.label in odd_fields %}
 				<td class="input-header">{{field.label_tag}}</td><td class="contains-input">{{field}}</td></tr>
@@ -36,7 +39,7 @@ h5.heading {
 	  		<label for='id_insert_position' style='margin-right:30px;width:auto;'>{{ form.insert_position.label }}</label>
 	  		{{ form.insert_position}}
 	    {% endif %}
-	    <input type="submit" class='pull-right btn primary submit-button' value="Submit &rarr;" style='margin-right:50px' />
+	    <input type="submit" class='btn submit-button' value="Submit &rarr;" style='margin-left:50px' />
 	  	</p>
 	  </div>
 	</form>

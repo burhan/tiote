@@ -97,9 +97,11 @@ def cols_struct(request):
             existing_tables=tbl_names, existing_columns=tbl_cols['rows'], label_suffix=':', data=request.POST)
         # handle invalid forms
         if not form.is_valid():
-            return functions.response_shortcut(request, template='form_errors',
+            return fns.response_shortcut(request, template='form_errors',
                 extra_vars={'form':form,})
+        
         # handle valid forms
+        raise Exception(request.POST)
         return qry.create_column(conn_params, request.GET, request.POST)
 
     # table view
@@ -112,7 +114,7 @@ def cols_struct(request):
 
     form_html= fns.render_template(request, 'tbl/tt_col.html', context={'form': form, 'edit':False,
         'table_fields': ['name', 'engine', 'charset', 'inherit', 'of_type'],
-        'odd_fields': ['type','key','charset', 'column', 'on delete'],
+        'odd_fields': ['type','key','charset', 'not null'],
         'dialect': conn_params['dialect'],
         # 'table_with_columns': table_with_columns,
         }, is_file=True)

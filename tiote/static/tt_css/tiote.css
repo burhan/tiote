@@ -423,7 +423,7 @@ table.compact-form td, table.compact-form, table.compact-form th {
 }
 
 table.compact-form div.validation-advice {
-	width: 180px;
+	width: 160px;
 }
 
 table.contact-form td:first-child {
@@ -433,6 +433,7 @@ table.contact-form td:first-child {
 table.compact-form td label {
     width: auto;
     font-size: 12px;
+    float:none;
 }
 
 table.compact-form td label span {
@@ -445,4 +446,9 @@ table.compact-form td.occupy label {
 
 .contains-input input, select {
 	width: 180px;
+}
+
+.btn {
+	font-size: 12px;
+	font-family: Arial, sans-serif;
 }
