@@ -12,6 +12,9 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     while some few depends on post_data
 
     get_data and post_data are gotten from request.GET and request.POST or form.cleaned_data
+
+    some functions in this file should have been (and previously have been) in this function. but 
+    the contents of a function are not indexed by IDEs and that makes debugging difficult
     '''
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
@@ -19,7 +22,6 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         'drop_db', 'drop_sequence', 'reset_sequence',)
     
     psycopg2_queries = ('drop_db', )
-
 
     if query_type in no_return_queries:
         conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']
@@ -218,9 +220,9 @@ def insert_row(conn_params, get_data={}, form_data={}):
         cols.append(k)
         if type(form_data[k]) == list:
             value = u",".join(  form_data[k]  )
-            values.append( fns.quote(value) )
+            values.append( fns.str_quote(value) )
         else:
-            values.append( fns.quote(form_data[k]) )
+            values.append( fns.str_quote(form_data[k]) )
 
     # generate sql insert statement
     q = u"INSERT INTO {0}{tbl} ({1}) VALUES ({2})".format(
@@ -390,42 +392,78 @@ def get_dependencies(conn_params, get_data={}): # might later be extended for ob
     }
 
 
-def col_defn(col_data, sfx):
+def col_defn(dialect, col_data, i):
     '''
-    used with iterations, sfx = str(i) where i is index of current iterations
-    returns individual column creation statement; excludes indexes and keys
+    returns individual column creation statement; excluding indexes and keys
+
+    used with iterations, i = str(i) where i is index of current iterations
     '''
     
-    sub_q = ' {name_'+sfx+'} {type_'+sfx+'}'
-    # types with binary
-    if col_data['type_'+sfx] in ['tinytext','text','mediumtext','longtext']:
-        sub_q += ' BINARY' if 'binary' in col_data['other_'+sfx] else ''
+    sub_q = ' {name_'+i+'} {type_'+i+'}'
+    
     # types with length
-    if col_data['type_'+sfx] in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
+    if col_data['type_'+i] in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
                       'real','double','float','decimal','numeric','char','varchar',
                       'binary','varbinary']:
-        sub_q += '({size_'+sfx+'})' if col_data['size_'+sfx] else ''
-    # types with unsigned
-    if col_data['type_'+sfx] in ['tinyint','smallint','mediumint','int','integer','bigint',
-                      'real','double','float','decimal','numeric']:
-        sub_q += ' UNSIGNED' if 'unsigned' in col_data['other_'+sfx] else ''
-    # types needing values
-    if col_data['type_'+sfx] in ['set','enum']:
-        sub_q += ' {values_'+sfx+'}' if col_data['values_'+sfx] else ''
-    # types needing charsets
-    if col_data['type_'+sfx] in ['char','varchar','tinytext','text',
-                            'mediumtext','longtext','enum','set']:
-        sub_q += ' CHARACTER SET {charset_'+sfx+'}'
-    # some options
-    sub_q += ' NOT NULL' if 'not null' in col_data['other_'+sfx] else ' NULL'
-    s_d = col_data['default_'+sfx]
-    if s_d:
-        if col_data['type_'+sfx] not in ['tinyint','smallint','mediumint','int','integer','bigint',
-                          'bit','real','double','float','decimal','numeric']:
-            sub_q += ' DEFAULT \''+s_d+'\''
-        else:
-            sub_q += ' DEFAULT '+s_d+''
-#                    sub_q += ' DEFAULT {default_'+sfx+'}' if col_data['default_'+sfx] else ''
-    sub_q += ' AUTO_INCREMENT' if 'auto increment' in col_data['other_'+sfx] else ''
+        sub_q += '({size_'+i+'})' if col_data['size_'+i] else ''
+    
+
+    if dialect == 'mysql':
+        # types with unsigned
+        if col_data['type_'+i] in ['tinyint','smallint','mediumint','int','integer','bigint',
+                          'real','double','float','decimal','numeric']:
+            sub_q += ' UNSIGNED' if 'unsigned' in col_data['other_'+i] else ''
+        # types needing values
+        if col_data['type_'+i] in ['set','enum']:
+            sub_q += ' {values_'+i+'}' if col_data['values_'+i] else ''
+        # types with binary
+        if col_data['type_'+i] in ['tinytext','text','mediumtext','longtext']:
+            sub_q += ' BINARY' if 'binary' in col_data['other_'+i] else ''
+        # types needing charsets
+        if col_data['type_'+i] in ['char','varchar','tinytext','text',
+                                'mediumtext','longtext','enum','set']:
+            sub_q += ' CHARACTER SET {charset_'+i+'}'
+
+        sub_q += ' AUTO_INCREMENT' if 'auto increment' in col_data['other_'+i] else ''
+
+    # not null
+    sub_q += ' NOT NULL' if 'not null' in col_data['other_'+i] else ' NULL'
+    # default value
+    default_value = col_data['default_'+i]
+    if default_value:
+        sub_q += 'DEFAULT %s' % fns.str_quote(default_value)
+
+#         if col_data['type_'+i] not in ['tinyint','smallint','mediumint','int','integer','bigint',
+#                           'bit','real','double','float','decimal','numeric']:
+#             sub_q += ' DEFAULT \''+s_d+'\''
+#         else:
+#             sub_q += ' DEFAULT '+s_d+''
+# #                    sub_q += ' DEFAULT {default_'+i+'}' if col_data['default_'+i] else ''
+
     return sub_q
+
+
+def create_column(conn_params, get_data={}, post_data={}):
+    queries = []
+    # generation of column creation sequel statements
+    d = {'primary':'PRIMARY KEY', 'unique':'UNIQUE', 'index':"INDEX"}
+    q0 = "ALTER TABLE {obj}.{tbl} ADD" + col_defn(conn_params['dialect'], post_data, str(0))
+    q0 = q0.format(
+        obj = get_data['db'] if conn_params['dialect'] == 'mysql' else get_data['schm'],
+        tbl = get_data['tbl']
+    )
+
+    if conn_params['dialect'] == 'mysql':
+        # handle column placement
+        if post_data['insert_position'] == 'at the beginning':
+            q0 += ' FIRST'
+        elif post_data['insert_position'].count('after '):
+            q0 += ' AFTER ' + post_data['insert_position'].split(' ')[1].strip()
+        queries.append(q0)
+        # handle key
+        if post_data['key_0']:
+            q1 = "ALTER TABLE {table} ADD "+d[ post_data['key_0'] ] +'('+post_data['name_0']+')'
+            queries.append(q1.format(**post_data))
+
+    return queries
 

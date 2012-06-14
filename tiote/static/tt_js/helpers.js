@@ -29,7 +29,7 @@ function make_checkable(data_table) {
 		var id =  e.target.getProperty('id');
 		id = id.replace('check', 'row'); // id of equivalent <tr>
 		selected_tr = $(id)
-		if (e.shift && typeof(last_selected_tr == 'element') && last_selected_tr != selected_tr){
+		if (e.shift && typeof(last_selected_tr) == 'object' && last_selected_tr != selected_tr){
 			var checker_status;
 			if (data_table.isSelected(last_selected_tr)) {
 				data_table.selectRange(last_selected_tr, selected_tr);
@@ -73,12 +73,12 @@ function set_all_tr_state(context, state) {
 
 
 function runXHRJavascript(){
-//	console.log('runXHRJavaxript() called!');
-	var scripts = $ES("script", 'rightside');
+//	console.log('runXHRJavaxript!');
+	var scripts = $ES("script", 'tt-content');
 	for (var i=0; i<scripts.length; i++) {
 		// basic xss prevention
-		if (scripts[i].get("ajaxKey") == _ajaxKey)
-			return;
+		if (scripts[i].get("ajaxKey") != _ajaxKey)
+			continue;
 		
 		var toRun = scripts[i].get('html');
 		var newScript = new Element("script");
@@ -160,8 +160,8 @@ function getWindowHeight() {
 function tbl_pagination(total_count, limit, offset) {
 	var pag_max = Math.floor(total_count / limit);
 	var pag_lnks = new Elements();
-	for ( i = 0; i < (pag_max + 1); i++) {
-		var navObj = location.hash.parseQueryString(false, true);
+	var navObj = page_hash();
+	for (var i = 0; i < (pag_max + 1); i++) {
 		navObj['offset'] = String(i*limit);
 		var request_url = location.protocol+'//'+location.host+location.pathname+Object.toQueryString(navObj);
 		pag_lnks.include( new Element('a',{ 'href': request_url, 
@@ -178,14 +178,16 @@ function tbl_pagination(total_count, limit, offset) {
 				(pag_max > 2) ? pag_lnks[2].addClass('last') : null, 
 				pag_lnks[1].clone().set('text','Next').addClass('cntrl').removeClass('last'),
 				pag_lnks[pag_max].clone().set('text', 'Last').addClass('cntrl')
-				]);
-				
-		} else if (j == pag_max) {
-			ancs.append( [ pag_lnks[0].clone().set('text','First').addClass('cntrl'), 
+				]);		
+		} 
+		else if (j == pag_max) {
+			ancs.append( [ pag_lnks[0].clone().set('text','First').addClass('cntrl'),
 				pag_lnks[j-1].clone().set('text','Prev').addClass('cntrl last'),
+				(pag_max > 2) ? pag_lnks[j-2] : null,
 				pag_lnks[j-1], pag_lnks[j].addClass('active') 
 				]);
-		} else {
+		} 
+		else {
 			ancs.append( [ pag_lnks[0].clone().set('text','First').addClass('cntrl').removeClass('last'),
 				pag_lnks[j-1].clone().set('text','Prev').addClass('cntrl last'),
 				pag_lnks[j-1], pag_lnks[j].addClass('active'), pag_lnks[j+1].addClass('last'),

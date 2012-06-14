@@ -219,7 +219,7 @@ class BaseColumnForm(forms.BaseForm):
                 choices = fns.make_choices(types),
                 widget = forms.Select(attrs={'class':'required needs:values:set|enum select_requires:values'
                     +sufx+':set|enum select_requires:size'+sufx+':varchar'}),
-                initial = 'varchar',
+                initial = 'varchar' if dialect =='mysql' else 'character varying',
                 label = 'type',
             )
             # this field is only displayed when the type field is set to one of any types

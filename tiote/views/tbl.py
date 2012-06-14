@@ -32,7 +32,7 @@ def browse(request):
         show_tbl_optns = True,
         tbl_optn_type='data',
         empty_err_msg="This table contains no items",
-        columns_desc=tbl_structure,
+        # columns_desc=tbl_structure,
         )
     return c.get(request)
 
@@ -91,14 +91,21 @@ def cols_struct(request):
                 query_data['schm'] = request.GET.get('schm')
             
             return qry.rpr_query(conn_params, q, query_data)
+    # handle submission of new column form
+    elif request.method == 'POST':
+        form = forms.ColumnForm(conn_params['dialect'], engines=supported_engines, charsets=charset_list,
+            existing_tables=tbl_names, existing_columns=tbl_cols['rows'], label_suffix=':', data=request.POST)
+        # handle invalid forms
+        if not form.is_valid():
+            return functions.response_shortcut(request, template='form_errors',
+                extra_vars={'form':form,})
+        # handle valid forms
+        return qry.create_column(conn_params, request.GET, request.POST)
 
     # table view
-    
     http_resp = base_struct(request, tbl_data=tbl_cols, show_tbl_optns=True,
         tbl_props= {'keys': (('column', 'key'), )}, tbl_optn_type='tbl_like',
         subv='cols', empty_err_msg="Table contains no columns")
-
-    # return http_resp
 
     form = forms.ColumnForm(conn_params['dialect'], engines=supported_engines, charsets=charset_list,
         existing_tables=tbl_names, existing_columns=tbl_cols['rows'], label_suffix=':')
@@ -106,6 +113,7 @@ def cols_struct(request):
     form_html= fns.render_template(request, 'tbl/tt_col.html', context={'form': form, 'edit':False,
         'table_fields': ['name', 'engine', 'charset', 'inherit', 'of_type'],
         'odd_fields': ['type','key','charset', 'column', 'on delete'],
+        'dialect': conn_params['dialect'],
         # 'table_with_columns': table_with_columns,
         }, is_file=True)
 

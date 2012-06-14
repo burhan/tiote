@@ -148,7 +148,7 @@ def qd(query_dict):
     return dict((key, query_dict.get(key)) for key in query_dict)
 
 
-# render the given template with a RequestContext(main reeason)
+# render the given template with a RequestContext(main reason)
 def render_template(request, template, context= {}, is_file=False):
     '''
     Helper function which uses ``request`` to get the RequestContext which is used 

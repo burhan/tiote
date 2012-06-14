@@ -1,4 +1,5 @@
 var pg, nav; // global variables
+var assets = new Hash(); // very funny store
 
 function navigationChangedListener(navObject, oldNavObject){
 	// redirect to the next page as gotten from the location hash
@@ -652,7 +653,7 @@ function formResponseListener(text, xml, form, n_obj, dialog_handler) {
 	}
 	
 	var html = ("" + resp['msg']).replace("\n","&nbsp;");
-	if (n_obj['v']=='insert' || Cookie.read('tt_edit_form')) {
+	if (n_obj['v']!= 'q') {
 		$E('.msg-placeholder').set('html', html);
 		tweenBgToWhite($E('.msg-placeholder').getElement('div.alert-message'))
 	}
@@ -661,10 +662,11 @@ function formResponseListener(text, xml, form, n_obj, dialog_handler) {
 
 
 Page.prototype.completeForm = function(dialog_handler){
-	dialog_handler = dialog_handler || false;
 //	console.log('completeForm()!');
-	if (! $$('.tt_form').length) return ; 
+	if (! $$('.tt_form').length) 
+		return ; 
 	
+	dialog_handler = dialog_handler || false;
 	$$('.tt_form').each(function(form){
 		// - function calls formResponseListener with needed variables
 		// - hack to pass out the needed variables to an first class function
@@ -672,14 +674,67 @@ Page.prototype.completeForm = function(dialog_handler){
 			formResponseListener(text,xml,form, page_hash(), dialog_handler);
 		};
 		
-		//attach validation object
+		// attach validation object
 		var form_validator = new Form.Validator.Inline(form, {
 			'evaluateFieldsOnBlur':false, 'evaluateFieldsOnChange': false
 		});
+
+		// add new vaildation
+		// this validation is run only when the select element current value points 
+		// to one of the predefined validation points
+        form_validator.add('select_requires', {
+            
+			errorMsg: function(el){
+				if (Object.keys(assets).contains('select_requires_err'))
+					return assets['select_requires_err'];
+				return 'there was an error';
+            },
+			
+            test: function(el){
+				var cls_itms = el.get('class').split(' ');
+				var stmt = '';
+				// loop through the classes and find that which satisfies the requirement
+				// if the found class string has already being consumed (i.e. stored in assets)
+				// then skip to the next class and set it has the one to be consumed (store in stmt)
+				for (var _in = 0; _in < cls_itms.length; _in++) {
+					var _temp = cls_itms[_in];
+					if (! _temp.contains('select_requires:'))
+						continue; // not a needed class item
+		
+					var _key = 'select_requires_stmt';
+					if (Object.keys(assets).contains(_key) && assets[_key] == _temp)
+						continue
+					else {
+						stmt = _temp;
+						assets[_key] = stmt;
+					}
+					break; // the first class that satisfies this condition is the needed class
+				}
+				// description of each condition
+				// select_requires:elmt_required:values
+				var optns = stmt.split(':'); // ':' is the options delimiter
+				var _vals = ( optns[2].contains('|') ) ? optns[2].split('|') : [ optns[2] ];
+				// check if the value is one of the values and skips or ends the validation if its the last one
+				if (!_vals.contains(el.value)) {
+					return true; // assume to pass the test since it is not a needed value
+				}
+				// check if the elements specified in the second part of the description string
+				// is set. if so it validates if not set error string
+				if (! optns[1].contains('|') && $('id_'+ optns[1]).value )
+					return true; // pass test
+				else {
+					assets['select_requires_err'] = 'This field requires '+ optns[1].split('_')[0] + ' field';
+					return false; // fail test
+				}
+				
+				return false; // failing is the default: for debugging sake
+            }
+        });
+
 		// handle submission immediately after validation
 		form_validator.addEvent('formValidate', function(status, form, e){
-			if (!status) return; // form didn't validate
 			e.stop(); // stop propagation of event and also prevent default
+			if (!status) return; // form didn't validate
 			// submit the values of the form
 			new XHR({
 				url: generate_ajax_url(),
@@ -766,3 +821,26 @@ function show(a) {
 function hide(a) {
 	$(a).style.display = 'none';
 }
+
+function updateSelectNeedsValues(){
+	console.log('updateSelectNeedsValues');
+	$$('.tt_form .compact-form select').each(function(sel_item){
+		if (sel_item.get('class').contains('needs:')) {
+			// find definition statement
+			var stmt = '';
+			sel_item.get('class').split(' ').each(function(class_item){
+				if (class_item.contains('needs') )
+					stmt = class_item;
+			});
+			//
+			var stmt_cond = stmt.split(':');
+			sel_item.addEvent('change', function(e){
+				if (stmt_cond[2].split('|').contains(e.target.value))
+					e.target.getParent('table').getElements('.'+stmt_cond[1]+'-needed').removeClass('hidden');
+				else
+					e.target.getParent('table').getElements('.'+stmt_cond[1]+'-needed').addClass('hidden');
+			});
+		}
+	});
+}
+

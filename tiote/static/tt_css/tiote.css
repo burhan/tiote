@@ -422,6 +422,10 @@ table.compact-form td, table.compact-form, table.compact-form th {
     padding-bottom: 5px;
 }
 
+table.compact-form div.validation-advice {
+	width: 180px;
+}
+
 table.contact-form td:first-child {
 	padding-top: 5px;
 }
