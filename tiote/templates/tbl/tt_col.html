@@ -12,6 +12,7 @@ h5.heading {
 <div class='row'><div class='span9'><div class='small-form-container'>
     <h5 class="heading">Add New Column</h5>
 	<form class="variable_form tt_form" action="" method="post" accept-charset="utf-8">
+		<div class='msg-placeholder'></div>
 		{% csrf_token %}
 		<table class='compact-form'><tbody>
 	  	{% for field in form %}

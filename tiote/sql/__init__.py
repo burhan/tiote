@@ -87,4 +87,32 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
     elif dialect == 'mysql':
     	return mysql.generate_query(query_type, query_data=query_data)
 
-    	
+
+def get_column_sql(dialect, get_data={}, form_data={}):
+    queries = []
+    i = 0 # this form contains only one BaseColumnForm
+    # generation of column creation sequel statements
+    first_query = "ALTER TABLE {obj}.{tbl} ADD"
+    # dialect dependent
+    if dialect == 'postgresql':
+        first_query += pgsql.col_defn(form_data, str(i))
+    elif dialect == 'mysql':
+        first_query += mysql.col_defn(form_data, str(i))
+    # default value (common syntax for both dialects)
+    default_value = form_data['default_%d' % i]
+    if default_value:
+        first_query += ' DEFAULT %s' % fns.str_quote(default_value)
+    # translate variables
+    first_query = first_query.format(
+        obj = get_data.get('db') if dialect == 'mysql' else get_data.get('schm'),
+        tbl = get_data.get('tbl'),
+        **form_data
+    )
+    # handle column placement in mysql
+    if dialect == 'mysql':
+        if form_data['insert_position'] == 'at the beginning':
+            first_query += ' FIRST'
+        elif form_data['insert_position'].count('after '):
+            first_query += ' AFTER ' + form_data['insert_position'].split(' ')[1].strip()
+
+    return (first_query, )

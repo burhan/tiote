@@ -7,7 +7,7 @@ from django import forms
 
 pgsql_types = ('bigint', 'bigserial', 'bit', 'bit varying', 'boolean', 'bytea', 
     'character varying', 'character', 'cidr', 'date', 'double precision', 'inet', 'integer', 
-    'lseg', 'macaddr', 'money', 'real', 'smallint', 'serial', 'text', 'time', 
+    'lseg', 'macaddr', 'money', 'numeric', 'real', 'smallint', 'serial', 'text', 'time', 
     'time with time zone', 'timestamp', 'timestamp with time zone', 'uuid', 'xml')
 
 pgsql_encoding = ('UTF8', 'SQL_ASCII', 'BIG5', 'EUC_CN', 'EUC_JP', 'EUC_KR', 'EUC_TW',

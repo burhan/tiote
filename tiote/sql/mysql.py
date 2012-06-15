@@ -205,3 +205,45 @@ def generate_query(query_type, query_data=None):
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
 
+
+def col_defn(col_data, i):
+    '''
+    returns individual column creation statement; excluding indexes and keys
+
+    used with iterations, i = str(i) where i is index of current iterations
+    '''
+    
+    sql_stmt = ' {name_'+i+'} {type_'+i+'}'
+    # types with length
+    if col_data['type_'+i] in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
+                      # 'real','double','float', # these types needs an extra 'decimals' option
+                                                 # before its syntax can have length
+                      'decimal','numeric','char','varchar',
+                      'binary','varbinary']:
+        sql_stmt += '({length_'+i+'})' if col_data['length_'+i] else ''
+    # types with unsigned
+    if col_data['type_'+i] in ['tinyint','smallint','mediumint','int','integer','bigint',
+                      'real','double','float','decimal','numeric']:
+        sql_stmt += ' UNSIGNED' if 'unsigned' in col_data['other_'+i] else ''
+    # types needing values
+    if col_data['type_'+i] in ['set','enum']:
+        sql_stmt += ' {values_'+i+'}' if col_data['values_'+i] else ''
+    # types with binary
+    if col_data['type_'+i] in ['tinytext','text','mediumtext','longtext']:
+        sql_stmt += ' BINARY' if 'binary' in col_data['other_'+i] else ''
+    # types needing charsets
+    if col_data['type_'+i] in ['char','varchar','tinytext','text',
+                            'mediumtext','longtext','enum','set']:
+        sql_stmt += ' CHARACTER SET {charset_'+i+'}'
+
+    sql_stmt += ' AUTO_INCREMENT' if 'auto increment' in col_data['other_'+i] else ''
+    # not null
+    sql_stmt += ' NOT NULL' if 'not null' in col_data['other_'+i] else ' NULL'
+    
+    # handle key
+    d = {'primary':'PRIMARY KEY', 'unique':'UNIQUE', 'index':"INDEX"}
+    key_field = col_data['key_'+i]
+    if key_field:
+        sql_stmt += ' ' + d[key_field]
+
+    return sql_stmt

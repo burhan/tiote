@@ -233,7 +233,7 @@ class pgTypeField(forms.MultiValueField):
             first_field,
             forms.ChoiceField(
                 choices = ( 
-                    ("default", "",), # made the empty string to contain something to bypass
+                    ("_default", "",), # made the empty string to contain something to bypass
                                       # non-empty validation test
                     ("[]","[]") 
                 ),
@@ -280,7 +280,7 @@ class BaseColumnForm(forms.BaseForm):
                 f['type'+sufx] = forms.ChoiceField(
                     choices = fns.make_choices(mysql_types),
                     widget = forms.Select(attrs={'class':'required needs:values:set|enum select_requires:values'
-                        +sufx+':set|enum select_requires:size'+sufx+':varchar'}),
+                        +sufx+':set|enum select_requires:length'+sufx+':varchar|varbinary'}),
                     initial = 'varchar',
                     label = 'type',
                 )
@@ -290,7 +290,7 @@ class BaseColumnForm(forms.BaseForm):
                 label = 'values', required = False, 
                 help_text="Enter in the format: ('yes','false')",
             )
-            f['size'+sufx] = forms.IntegerField(
+            f['length'+sufx] = forms.IntegerField(
                 widget=forms.TextInput(attrs={'class':'validate-integer'}),
                 label = 'size', required=False, )
             f['key'+sufx] = forms.ChoiceField(
@@ -305,7 +305,7 @@ class BaseColumnForm(forms.BaseForm):
                 widget=forms.TextInput
             )
             if dialect == 'postgresql':
-                f['not_null_'+sufx] = forms.BooleanField(
+                f['not_null'+sufx] = forms.BooleanField(
                     required=False, label='not null')
 
             elif dialect == 'mysql':

@@ -91,6 +91,7 @@ def cols_struct(request):
                 query_data['schm'] = request.GET.get('schm')
             
             return qry.rpr_query(conn_params, q, query_data)
+
     # handle submission of new column form
     elif request.method == 'POST':
         form = forms.ColumnForm(conn_params['dialect'], engines=supported_engines, charsets=charset_list,
@@ -99,11 +100,18 @@ def cols_struct(request):
         if not form.is_valid():
             return fns.response_shortcut(request, template='form_errors',
                 extra_vars={'form':form,})
+        # prep form fields: add all type_ together
+        if conn_params['dialect'] == 'postgresql':
+            keys = [key for key in form.cleaned_data.keys() if key.startswith('type_')]
+            for key in keys:
+                _temp = form.cleaned_data[key].split('|')
+                form.cleaned_data[key] = _temp[0] # first index is the base type
+                if _temp[-1] != '_default':
+                    form.cleaned_data[key] += _temp[1] # the array specifier literal
+        # do column creation and return error
+        ret = qry.create_column(conn_params, request.GET, form.cleaned_data)
+        return HttpResponse(json.dumps(ret))
         
-        # handle valid forms
-        raise Exception(request.POST)
-        return qry.create_column(conn_params, request.GET, request.POST)
-
     # table view
     http_resp = base_struct(request, tbl_data=tbl_cols, show_tbl_optns=True,
         tbl_props= {'keys': (('column', 'key'), )}, tbl_optn_type='tbl_like',

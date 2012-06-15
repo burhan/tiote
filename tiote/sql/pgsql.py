@@ -310,4 +310,40 @@ def generate_query(query_type, query_data=None):
         '''
         q0 = stmt.format(**query_data)
         return (q0, )
-    
+
+
+def col_defn(col_data, i):
+    '''
+    returns individual column creation statement; excluding indexes and keys
+
+    used with iterations, i = str(i) where i is index of current iterations
+    '''
+    type_field = col_data['type_'+i]
+    length_field = col_data['length_'+i]
+    name_field = col_data['name_'+i]
+    key_field = col_data['key_'+i]
+
+    sql_stmt = ' {name} {type}'.format(name=name_field, type=type_field)
+    # types with length
+    # for type 'interval' length actually denotes 'precision'
+    if type_field in ('bit', 'bit varying', 'character varying', 'character', 'interval'):
+        sql_stmt += '({length_'+i+'})'
+    # date types really have a somewhat different syntax when it has length(actually its precision field).
+    # rewrite the contents of sql_stmt to this syntax
+    if length_field and ( type_field.startswith('time') or type_field.startswith('timestamp')):
+        _in = 4 if type_field.startswith('time') else 9 # the length of time and timestamp respectively
+        # restart column definition statement
+        sql_stmt = ' {name} {type_prefix} ({length}) {type_postfix}'.format(
+            type_prefix= type_field[0: _in],
+            length = length_field,
+            type_postfix = type_field[_in+1: ] # +1 to avoid the whitespace
+            )
+    # nullable
+    sql_stmt += ' NOT NULL' if col_data['not_null_'+i] else ''
+    # handle key
+    d = {'primary':'PRIMARY KEY', 'unique':'UNIQUE', 'index':"INDEX"}
+    if key_field:
+        sql_stmt += ' '+ d[key_field] if key_field != 'unique' else ''
+    # done
+    return sql_stmt
+

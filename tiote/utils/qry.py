@@ -392,78 +392,16 @@ def get_dependencies(conn_params, get_data={}): # might later be extended for ob
     }
 
 
-def col_defn(dialect, col_data, i):
-    '''
-    returns individual column creation statement; excluding indexes and keys
-
-    used with iterations, i = str(i) where i is index of current iterations
-    '''
-    
-    sub_q = ' {name_'+i+'} {type_'+i+'}'
-    
-    # types with length
-    if col_data['type_'+i] in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
-                      'real','double','float','decimal','numeric','char','varchar',
-                      'binary','varbinary']:
-        sub_q += '({size_'+i+'})' if col_data['size_'+i] else ''
-    
-
-    if dialect == 'mysql':
-        # types with unsigned
-        if col_data['type_'+i] in ['tinyint','smallint','mediumint','int','integer','bigint',
-                          'real','double','float','decimal','numeric']:
-            sub_q += ' UNSIGNED' if 'unsigned' in col_data['other_'+i] else ''
-        # types needing values
-        if col_data['type_'+i] in ['set','enum']:
-            sub_q += ' {values_'+i+'}' if col_data['values_'+i] else ''
-        # types with binary
-        if col_data['type_'+i] in ['tinytext','text','mediumtext','longtext']:
-            sub_q += ' BINARY' if 'binary' in col_data['other_'+i] else ''
-        # types needing charsets
-        if col_data['type_'+i] in ['char','varchar','tinytext','text',
-                                'mediumtext','longtext','enum','set']:
-            sub_q += ' CHARACTER SET {charset_'+i+'}'
-
-        sub_q += ' AUTO_INCREMENT' if 'auto increment' in col_data['other_'+i] else ''
-
-    # not null
-    sub_q += ' NOT NULL' if 'not null' in col_data['other_'+i] else ' NULL'
-    # default value
-    default_value = col_data['default_'+i]
-    if default_value:
-        sub_q += 'DEFAULT %s' % fns.str_quote(default_value)
-
-#         if col_data['type_'+i] not in ['tinyint','smallint','mediumint','int','integer','bigint',
-#                           'bit','real','double','float','decimal','numeric']:
-#             sub_q += ' DEFAULT \''+s_d+'\''
-#         else:
-#             sub_q += ' DEFAULT '+s_d+''
-# #                    sub_q += ' DEFAULT {default_'+i+'}' if col_data['default_'+i] else ''
-
-    return sub_q
-
-
-def create_column(conn_params, get_data={}, post_data={}):
-    queries = []
-    # generation of column creation sequel statements
-    d = {'primary':'PRIMARY KEY', 'unique':'UNIQUE', 'index':"INDEX"}
-    q0 = "ALTER TABLE {obj}.{tbl} ADD" + col_defn(conn_params['dialect'], post_data, str(0))
-    q0 = q0.format(
-        obj = get_data['db'] if conn_params['dialect'] == 'mysql' else get_data['schm'],
-        tbl = get_data['tbl']
+def create_column(conn_params, get_data={}, form_data={}):
+    # fetch queries
+    queries = sql.get_column_sql(conn_params['dialect'], get_data, form_data)
+    ret = sa.short_query(conn_params, queries)
+    if ret['status'] == 'success': ret['msg'] = 'column creation succesfull'
+    # format status messages used in flow control (javascript side)
+    # replaces with space and new lines with the HTML equivalents
+    ret['msg'] = '<div class="alert-message block-message {0} data-entry"><code>\
+{1}</code></div>'.format(
+        'success' if ret['status'] == 'success' else 'error',
+        ret['msg'].replace('  ', '&nbsp;&nbsp;&nbsp;').replace('\n', '<br />')
     )
-
-    if conn_params['dialect'] == 'mysql':
-        # handle column placement
-        if post_data['insert_position'] == 'at the beginning':
-            q0 += ' FIRST'
-        elif post_data['insert_position'].count('after '):
-            q0 += ' AFTER ' + post_data['insert_position'].split(' ')[1].strip()
-        queries.append(q0)
-        # handle key
-        if post_data['key_0']:
-            q1 = "ALTER TABLE {table} ADD "+d[ post_data['key_0'] ] +'('+post_data['name_0']+')'
-            queries.append(q1.format(**post_data))
-
-    return queries
-
+    return ret
