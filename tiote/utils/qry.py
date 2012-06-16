@@ -19,7 +19,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
         'drop_table', 'empty_table', 'delete_row', 'create_column', 'drop_column',
-        'drop_db', 'drop_sequence', 'reset_sequence',)
+        'drop_db', 'drop_sequence', 'reset_sequence', 'drop_foreign_key', )
     
     psycopg2_queries = ('drop_db', )
 
@@ -27,12 +27,12 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         conn_params['db'] = get_data['db'] if get_data.has_key('db') else conn_params['db']
         query_data = {}
         query_data.update(get_data, **post_data)
-        q = sql.generate_query( query_type, conn_params['dialect'],query_data)
+        queries = sql.generate_query( query_type, conn_params['dialect'],query_data)
         if conn_params['dialect'] == 'postgresql' and query_type in psycopg2_queries:
             # this queries needs to be run outside a transaction block
             # SA execute functions runs all its queries inside a transaction block
-            result = sa.execute_outside_transaction(conn_params, q)
-        else: result = sa.short_query(conn_params, q)
+            result = sa.execute_outside_transaction(conn_params, queries)
+        else: result = sa.short_query(conn_params, queries)
         return HttpResponse( json.dumps(result) )
     
     # specific queries with implementations similar to both dialects

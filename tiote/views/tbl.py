@@ -47,7 +47,7 @@ def base_struct(request, **kwargs):
 
     url_prefix = urlencode(dest_url)
 
-    subnav_list = ['cols', 'idxs',]
+    subnav_list = ['cols', 'idxs', 'fkeys',] # manually updated as more features are implemented
     if conn_params['dialect'] == 'postgresql': subnav_list.append('deps')
 
     props = {'props_table': True }
@@ -134,9 +134,6 @@ def cols_struct(request):
 def idxs_struct(request):
     conn_params = fns.get_conn_params(request, update_db=True)
 
-    if request.method == 'POST':
-        pass
-
     # view and creation things
     tbl_idxs = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
     return base_struct(request, tbl_data=tbl_idxs, show_tbl_optns=False, 
@@ -150,6 +147,29 @@ def deps_struct(request):
     tbl_deps = qry.get_dependencies(conn_params, fns.qd(request.GET))
     return base_struct(request, tbl_data=tbl_deps, show_tbl_optns=False,
         subv='deps', empty_err_msg="This table has no dependents")
+
+
+def fkeys_struct(request):
+    conn_params = fns.get_conn_params(request, update_db=True)
+
+    if request.method == "POST" and request.GET.has_key('upd8'):
+        # only drop foreign keys is currently supported
+        # format the where_stmt to a mapping of keys to values (a dict)
+        l = request.POST.get('where_stmt').strip().split(';')
+        query_data = {'conditions': fns.get_conditions(l) }
+        for k in ['db', 'tbl', 'schm']:
+            if request.GET.has_key(k): query_data[k] = request.GET.get(k)
+        # decide query to run
+        if request.GET.get('upd8') in ('drop', 'delete',): query_type = 'drop_foreign_key'
+        # run and return status of the executed query
+        return qry.rpr_query(conn_params, query_type, query_data)
+
+    # foreign key definitions
+    tbl_fkdeys = sa.get_fkeys_definitn(conn_params, request.GET)
+    return base_struct(request, tbl_data=tbl_fkdeys, show_tbl_optns=True, subv='fkeys',
+        tbl_props = {'keys': (('name', 'key'), )},
+        tbl_optn_type= 'tbl_like',
+        empty_err_msg= 'This table has no foreign keys')
 
 
 def insert(request):
@@ -257,6 +277,8 @@ def route(request):
             return idxs_struct(request)
         elif request.GET.get('subv') == 'deps':
             return deps_struct(request)
+        elif request.GET.get('subv') == 'fkeys':
+            return fkeys_struct(request)
         return cols_struct(request) # default
     elif request.GET.get('v') in ('insert', 'ins'):
         return insert(request)

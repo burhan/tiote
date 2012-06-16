@@ -81,6 +81,17 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
                 schm_prefx=prfx, tbl=query_data['tbl'], **where)
             queries.append(sql_stmt)
         return tuple(queries)
+
+    elif query_type == 'drop_foreign_key':
+        queries = []
+        for where in query_data['conditions']:
+            where['name'] = where['name'].replace("'", "")
+            queries.append( "ALTER TABLE {schm}.{tbl} DROP {symbol_name} {name}".format(
+                schm = query_data.get('schm') if dialect == 'postgresql' else query_data.get('db'),
+                symbol_name = 'CONSTRAINT' if dialect == 'postgresql' else 'FOREIGN KEY',
+                tbl = query_data.get('tbl'),
+                **where))
+        return tuple(queries)
     
     if dialect == 'postgresql':
     	return pgsql.generate_query(query_type, query_data=query_data)

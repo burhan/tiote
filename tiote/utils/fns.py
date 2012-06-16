@@ -21,6 +21,7 @@ _abbr = {
     'ins': 'insert',
     'dbs': 'databases',
     'deps': 'dependents',
+    'fkeys': 'foreign keys',
 }
 
 # returns page templates for each view

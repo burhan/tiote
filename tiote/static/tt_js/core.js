@@ -549,6 +549,8 @@ function do_action(tbl, e) {
 		else if (navObject['v'] == 'struct') {
 			if (navObject['subv'] == 'idxs')
 				msg += where_stmt.contains(';') ? 'indexes': 'index';
+			else if (navObject['subv'] == 'fkeys')
+				msg += where_stmt.contains(';') ? 'foreign keys': 'foreign key';
 			else
 				// it defaults to columns if there is no subv or the subv contains 'cols'
 				msg += where_stmt.contains(';') ? 'columns': 'column';

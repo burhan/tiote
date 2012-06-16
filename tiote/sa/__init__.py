@@ -155,6 +155,7 @@ def execute_outside_transaction(conn_params, stmts):
         return {'status':'success', 'msg':''}
 
 
+# implementation incomplete
 def insert(conn_params, get_data={}, post_data={}):
     # get_data must have key 'tbl'
     if not get_data.get('tbl'):
@@ -166,4 +167,30 @@ def insert(conn_params, get_data={}, post_data={}):
 
     tbl = Table(get_data.get('tbl'), meta, autoload=True,
         schema_name = get_data.get('schm'))
+
+
+def get_fkeys_definitn(conn_params, get_data={}, ):
+    if not get_data.has_key('tbl'):
+        raise KeyError('tbl')
+
+    _engine = _get_engine(conn_params)
+    fkeys_definitns = _engine.dialect.get_foreign_keys(_engine.connect(), get_data.get('tbl'), 
+        schema = get_data.get('schm') if get_data.has_key('schm') else None
+        )
+    # when there are not foreign keys for this table
+    if len(fkeys_definitns) == 0:
+        return {'count': len(fkeys_definitns)}
+    # make the structure fkeys_definitns be compatible with that used in BareTableView    
+    columns = fkeys_definitns[0].keys() # use the first definition to get the column names
+    rows = []
+    for definitn in fkeys_definitns: # definitn is a dict object
+        _temp = definitn.values()
+        # the second and last items is a list of columns
+        # transform it to a comma seperated list of each of the columns
+        for _index in [1, -1]:
+            _temp[_index] = ", ".join( _temp[_index] )
+        rows.append(_temp)
+    tbl_data = {'rows': rows, 'columns': columns, 'count': len(fkeys_definitns)}
+    # we're done
+    return tbl_data
 
