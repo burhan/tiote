@@ -88,14 +88,22 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
             rwz = []
             for tuple_row in r['rows']:
                 row = list(tuple_row)
-                _l = [ row[1] ]
-                if row[1] in ('bit', 'bit varying', 'character varying', 'character') and type(row[4]) is int:
+                data_type_str = row[1]
+                _l = [ data_type_str ]
+                datetime_precision = row[7]
+                if data_type_str in ('bit', 'bit varying', 'character varying', 'character') and type(row[4]) is int:
                     _l.append( '({0})'.format(row[4]) )
-                elif row[1] in ('numeric', 'decimal') and type(row[5]) is int or type(row[6]) is int:
-                    _l.append( '({0},{1})'.format(row[5], row[6]) )
-                elif row[1] in ('interval', 'time with time zone', 'time without time zone',
-                    'timestamp with time zone', 'timestamp without time zone') and type(row[7]) is int:
-                    _l.append( '({0})'.format(row[7]) )
+                # elif data_type_str in ('numeric', 'decimal') and type(row[5]) is int or type(row[6]) is int:
+                elif data_type_str in ('numeric', 'decimal'):
+                    numeric_precision, numeric_scale = row[5], row[6]
+                    _l.append( '(%d,%d)' % (numeric_precision, numeric_scale) )
+                # interval types should need some revising
+                elif data_type_str in ('interval', ):
+                    _l.append( '(%d)' % datetime_precision )
+                # time and timestamps have a somewhat different declarative syntax
+                elif datetime_precision is int and (data_type_str.startswith('time') or data_type_str.startswith('timestamp')):
+                    _in = 9 if data_type_str.startswith('timestamp') else 4 # the length of time and timestamp respectively
+                    _l = [ data_type_str[:_in], '(%d)' % datetime_precision , data_type_str[_in:]]
                 # append the current row to rwz
                 if query_type == 'table_structure': rwz.append([row[0], "".join(_l), row[2], row[3] ])
                 elif query_type == 'raw_table_structure': 

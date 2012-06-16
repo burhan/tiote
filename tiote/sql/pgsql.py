@@ -331,7 +331,7 @@ def col_defn(col_data, i):
     # date types really have a somewhat different syntax when it has length(actually its precision field).
     # rewrite the contents of sql_stmt to this syntax
     if length_field and ( type_field.startswith('time') or type_field.startswith('timestamp')):
-        _in = 4 if type_field.startswith('time') else 9 # the length of time and timestamp respectively
+        _in = 9 if type_field.startswith('timestamp') else 4 # the length of time and timestamp respectively
         # restart column definition statement
         sql_stmt = ' {name} {type_prefix} ({length}) {type_postfix}'.format(
             type_prefix= type_field[0: _in],

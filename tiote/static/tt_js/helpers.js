@@ -163,7 +163,7 @@ function tbl_pagination(total_count, limit, offset) {
 	var navObj = page_hash();
 	for (var i = 0; i < (pag_max + 1); i++) {
 		navObj['offset'] = String(i*limit);
-		var request_url = location.protocol+'//'+location.host+location.pathname+Object.toQueryString(navObj);
+		var request_url = '#' + Object.toQueryString(navObj);
 		pag_lnks.include( new Element('a',{ 'href': request_url, 
 			'class':'pag_lnk', 'text':(i+1)
 			})

@@ -214,25 +214,26 @@ def col_defn(col_data, i):
     '''
     
     sql_stmt = ' {name_'+i+'} {type_'+i+'}'
+    type_field = col_data['type_'+i]
     # types with length
-    if col_data['type_'+i] in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
+    if type_field in ['bit','tinyint','smallint','mediumint','int','integer','bigint',
                       # 'real','double','float', # these types needs an extra 'decimals' option
                                                  # before its syntax can have length
                       'decimal','numeric','char','varchar',
                       'binary','varbinary']:
         sql_stmt += '({length_'+i+'})' if col_data['length_'+i] else ''
     # types with unsigned
-    if col_data['type_'+i] in ['tinyint','smallint','mediumint','int','integer','bigint',
+    if type_field in ['tinyint','smallint','mediumint','int','integer','bigint',
                       'real','double','float','decimal','numeric']:
         sql_stmt += ' UNSIGNED' if 'unsigned' in col_data['other_'+i] else ''
     # types needing values
-    if col_data['type_'+i] in ['set','enum']:
+    if type_field in ['set','enum']:
         sql_stmt += ' {values_'+i+'}' if col_data['values_'+i] else ''
     # types with binary
-    if col_data['type_'+i] in ['tinytext','text','mediumtext','longtext']:
+    if type_field in ['tinytext','text','mediumtext','longtext']:
         sql_stmt += ' BINARY' if 'binary' in col_data['other_'+i] else ''
     # types needing charsets
-    if col_data['type_'+i] in ['char','varchar','tinytext','text',
+    if type_field in ['char','varchar','tinytext','text',
                             'mediumtext','longtext','enum','set']:
         sql_stmt += ' CHARACTER SET {charset_'+i+'}'
 
