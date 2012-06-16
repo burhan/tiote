@@ -284,12 +284,15 @@ class BaseColumnForm(forms.BaseForm):
                     initial = 'varchar',
                     label = 'type',
                 )
-            # this field is only displayed when the type field is set to one of any types
-            # that needs this e.g. (enum and set)
-            f['values'+sufx] = forms.CharField(
-                label = 'values', required = False, 
-                help_text="Enter in the format: ('yes','false')",
-            )
+    
+            if dialect == 'mysql':
+                # this field is only displayed when the type field is set to one of any types
+                # that needs this e.g. (enum and set)
+                f['values'+sufx] = forms.CharField(
+                    label = 'values', required = False, 
+                    help_text="Enter in the format: ('yes','false')",
+                )
+
             f['length'+sufx] = forms.IntegerField(
                 widget=forms.TextInput(attrs={'class':'validate-integer'}),
                 label = 'size', required=False, )
@@ -322,7 +325,6 @@ class BaseColumnForm(forms.BaseForm):
                     required = False,
                     label = 'other',
                 )
-
 
         # complete form creation process
         self.base_fields = f

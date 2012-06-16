@@ -21,7 +21,10 @@ h5.heading {
 	  		{% comment %} field 'values' are hidden until it is needed {% endcomment %}
 	    	
 	    	{% elif field.label == 'values' %}
-	    		<tr class='hidden values-needed'><td>{{field.label_tag}}</td><td>{{field}}</td><td colspan='2'>{{field.help_text}}</td></tr>
+	    		<tr class='hidden values-needed'>
+	    			<td>{{field.label_tag}}</td><td  class="contains-input">{{field}}</td>
+	    			<td colspan='2' style="color:#999;">{{field.help_text}}</td>
+	    		</tr>
 
 			{% elif field.name not in table_fields and field.label not in odd_fields %}
 				<tr><td class="input-header">{{field.label_tag}}<td class="contains-input">{{field|safe}}</td>

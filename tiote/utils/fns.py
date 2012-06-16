@@ -78,7 +78,8 @@ def site_proc(request):
     return {
         'ajaxKey': request.session.get('ajaxKey',''),
         'abbrevs_keys': _abbr.keys(),
-        'abbrevs_values': _abbr.values()
+        'abbrevs_values': _abbr.values(),
+        'dialect': get_conn_params(request)['dialect'],
     }
 
 def http_500(msg=''):

@@ -668,6 +668,16 @@ Page.prototype.completeForm = function(dialog_handler){
 	if (! $$('.tt_form').length) 
 		return ; 
 	
+	var _o = page_hash();
+	if (_dialect == 'mysql' && _o['sctn'] == 'tbl' && _o['v'] == 'struct') {
+		if (Object.keys(_o).contains('subv') && _o['subv'] != 'cols') {
+		}
+		else {
+			updateSelectNeedsValues();					
+		}
+
+	}
+	
 	dialog_handler = dialog_handler || false;
 	$$('.tt_form').each(function(form){
 		// - function calls formResponseListener with needed variables
@@ -825,7 +835,7 @@ function hide(a) {
 }
 
 function updateSelectNeedsValues(){
-	console.log('updateSelectNeedsValues');
+//	console.log('updateSelectNeedsValues');
 	$$('.tt_form .compact-form select').each(function(sel_item){
 		if (sel_item.get('class').contains('needs:')) {
 			// find definition statement
