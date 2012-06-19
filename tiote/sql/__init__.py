@@ -82,13 +82,22 @@ def generate_query(query_type, dialect='postgresql', query_data=None):
             queries.append(sql_stmt)
         return tuple(queries)
 
-    elif query_type == 'drop_foreign_key':
+    elif query_type == 'drop_constraint':
         queries = []
         for where in query_data['conditions']:
-            where['name'] = where['name'].replace("'", "")
-            queries.append( "ALTER TABLE {schm}.{tbl} DROP {symbol_name} {name}".format(
+            unsub_stmt = u"ALTER TABLE {schm}.{tbl} DROP {constraint_type}"
+            # convieniency hack : looks like hard coding
+            # spaces are enced as \xa0
+            if where['type'] == 'unique': where['type'] = 'INDEX'
+            where['type'] = where['type'].replace(u'\xa0', ' ')
+            where['type'] = where['type'].upper()
+            # accomodate syntax differences
+            if dialect == 'mysql' and where['type'] == 'PRIMARY KEY': pass
+            else: unsub_stmt += " {name}"
+            # substitute variable placeholders with their respective values
+            queries.append( unsub_stmt.format(
                 schm = query_data.get('schm') if dialect == 'postgresql' else query_data.get('db'),
-                symbol_name = 'CONSTRAINT' if dialect == 'postgresql' else 'FOREIGN KEY',
+                constraint_type = 'CONSTRAINT' if dialect == 'postgresql' else where['type'],
                 tbl = query_data.get('tbl'),
                 **where))
         return tuple(queries)

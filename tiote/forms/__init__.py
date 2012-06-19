@@ -376,3 +376,30 @@ class ColumnForm(BaseColumnForm):
                 widget = forms.Select(attrs={'class':'required'}),
             )
 
+
+class ForeignKeyForm(forms.BaseForm):
+
+    def __init__(self, dialect, default_schema=None, schema_list=[], table_list = [], 
+        current_table_columns = [], **kwargs):
+        f = SortedDict() # ordered structure
+        # name field has a default
+        f['name'] = forms.CharField(
+                widget = forms.TextInput(attrs={'class':'required'}),
+                # initial = 'auto generated',
+                help_text = 'leave empty to use an auto generated name',
+            )
+        f['referred_schema'] = forms.ChoiceField (
+                choices = fns.make_choices(schema_list),
+                initial = default_schema,
+                widget = forms.Select(attrs={'class':'required'}),
+            )
+        f['referred_table'] = forms.ChoiceField (
+            choices = fns.make_choices(table_list),
+            widget = forms.Select(attrs={'class':'required'}),
+            )
+        f['constrained_columns'] = forms.CharField()
+        f['referred_columns'] = forms.CharField()
+
+        self.fields = f
+        super(ForeignKeyForm, self).__init__(dialect, **kwargs)
+

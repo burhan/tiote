@@ -19,7 +19,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
     # common queries that returns success state as a dict only
     no_return_queries = ('create_user', 'drop_user', 'create_db','create_table',
         'drop_table', 'empty_table', 'delete_row', 'create_column', 'drop_column',
-        'drop_db', 'drop_sequence', 'reset_sequence', 'drop_foreign_key', )
+        'drop_db', 'drop_sequence', 'reset_sequence', 'drop_constraint', )
     
     psycopg2_queries = ('drop_db', )
 
@@ -28,6 +28,7 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         query_data = {}
         query_data.update(get_data, **post_data)
         queries = sql.generate_query( query_type, conn_params['dialect'],query_data)
+
         if conn_params['dialect'] == 'postgresql' and query_type in psycopg2_queries:
             # this queries needs to be run outside a transaction block
             # SA execute functions runs all its queries inside a transaction block
@@ -36,21 +37,15 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
         return HttpResponse( json.dumps(result) )
     
     # specific queries with implementations similar to both dialects
-    elif query_type == 'user_rpr':
-        if conn_params['dialect'] == 'mysql':
-            conn_params['db'] = 'mysql'
-        r = sa.full_query(conn_params, 
-            sql.stored_query(get_data['query'],conn_params['dialect']) )
-        if type(r) == dict:
-            r
-        else:
-            return fns.http_500(r)
         
-    elif query_type in ('indexes', 'primary_keys', 'foreign_key_relation'):        
+    elif query_type in ('indexes', 'primary_keys', 'foreign_key_relation'):
+        if conn_params['dialect'] == 'postgresql' and query_type == 'indexes':
+            return get_constraints(conn_params, query_type, get_data)
+
         r = sa.full_query(conn_params,
             sql.generate_query(query_type, conn_params['dialect'], get_data)[0])
         return r
-        
+
     elif query_type in ('get_single_row',):
         sub_q_data = {'tbl': get_data['tbl'],'db':get_data['db']}
         if get_data.has_key('schm'):
@@ -413,3 +408,63 @@ def create_column(conn_params, get_data={}, form_data={}):
         ret['msg'].replace('  ', '&nbsp;&nbsp;&nbsp;').replace('\n', '<br />')
     )
     return ret
+
+
+def get_constraints(conn_params, query_type, get_data={}, form_data={}):
+    # first face the simple guy
+    if conn_params['dialect'] == 'mysql':
+        r = sa.full_query(conn_params,
+            sql.generate_query(query_type, conn_params['dialect'], get_data)[0])
+        return r
+
+    # this sequence of code would be repeated often
+    def get_cols_with_post_as_dict(get_data):
+        # query for column name associated with its ordinal position. 
+        sql_stmt = sql.generate_query('column_assoc', conn_params['dialect'], get_data)[0]
+        cols_with_pos = sa.full_query(conn_params, sql_stmt)
+        # transform to dict for quick and easy indexing and retrieval
+        cols_with_pos = dict(cols_with_pos['rows'])
+        return cols_with_pos
+
+
+    # get raw constrainsts description
+    sql_stmt = sql.generate_query('constraints', conn_params['dialect'], get_data)[0]
+    con_desc = sa.full_query(conn_params, sql_stmt,);
+    # char to constraint type mapping as written in PostgreSQL documentation
+    char_constraint_map = {
+        'c': 'CHECK',
+        'f': 'FOREIGN KEY',
+        'p': 'PRIMARY KEY',
+        'u': 'UNIQUE',
+    }
+
+    columns = ['type', 'columns', 'description', 'name',]
+    rows = []
+    cols_with_pos = get_cols_with_post_as_dict(get_data)
+
+    for row in con_desc['rows']:
+        # contype 0, conname 1, conkey 2, confkey 3, relname 4, consrc 5
+        contype, conname, conkey, confkey, relname, consrc = row
+        # any contype not in the mapping above is not yet supported
+        if not char_constraint_map.has_key(contype): continue
+        desc = '' # starts empty
+        constrained_columns = ", ".join( [cols_with_pos[i] for i in conkey] )
+        type_ = char_constraint_map[contype]
+        # if this query is a foreign key translate the column names
+        if contype == 'c':
+            desc = consrc
+        if contype == 'f':
+            if relname != get_data.get('tbl'): # we need to get another columns with pos
+                get_data['tbl'] = relname
+                fr_cols_with_pos = get_cols_with_post_as_dict(get_data)
+            else: fr_cols_with_pos = cols_with_pos
+
+            referred_columns = [ fr_cols_with_pos[i] for i in confkey]
+            desc = relname + ":" + ", ".join(referred_columns)
+
+        # done
+        rows.append([ type_, constrained_columns, desc, conname])
+
+    return {'columns': columns, 'rows': rows, 'count': len(con_desc['rows'])}
+
+

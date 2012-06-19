@@ -125,7 +125,7 @@ def generate_query(query_type, query_data=None):
         FROM
             information_schema.tables
         WHERE 
-            TABLE_SCHEMA =  :db
+            TABLE_SCHEMA = :db
         """
         q0 = text(stmt, bindparams=bindparams)
         return (q0,)
@@ -133,9 +133,9 @@ def generate_query(query_type, query_data=None):
     elif query_type == 'indexes':
         stmt = """
         SELECT DISTINCT 
-            kcu.column_name, 
-            kcu.constraint_name, 
-            tc.constraint_type
+            kcu.column_name AS columns, 
+            kcu.constraint_name AS name, 
+            tc.constraint_type AS type
         FROM 
             information_schema.key_column_usage as kcu,
             information_schema.table_constraints as tc 

@@ -22,8 +22,6 @@ def browse(request):
             return edit(request)
     
     tbl_data = qry.browse_table(conn_params, request.GET, request.POST)
-    # table structure would be used as description for the individual columns
-    tbl_structure = qry.rpr_query(conn_params, 'table_structure', request.GET)['rows']
     # build table
     c = base.TableView(tbl_data=tbl_data,
         tbl_props = {'with_checkboxes': True, 'display_row': True, },
@@ -47,7 +45,7 @@ def base_struct(request, **kwargs):
 
     url_prefix = urlencode(dest_url)
 
-    subnav_list = ['cols', 'idxs', 'fkeys',] # manually updated as more features are implemented
+    subnav_list = ['cols', 'cons', ] # manually updated as more features are implemented
     if conn_params['dialect'] == 'postgresql': subnav_list.append('deps')
 
     props = {'props_table': True }
@@ -131,25 +129,7 @@ def cols_struct(request):
     return http_resp
 
 
-def idxs_struct(request):
-    conn_params = fns.get_conn_params(request, update_db=True)
-
-    # view and creation things
-    tbl_idxs = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
-    return base_struct(request, tbl_data=tbl_idxs, show_tbl_optns=False, 
-        subv='idxs', empty_err_msg="Table contains no indexes")
-
-
-def deps_struct(request):
-    conn_params = fns.get_conn_params(request, update_db=True)
-
-    # view and deletion things
-    tbl_deps = qry.get_dependencies(conn_params, fns.qd(request.GET))
-    return base_struct(request, tbl_data=tbl_deps, show_tbl_optns=False,
-        subv='deps', empty_err_msg="This table has no dependents")
-
-
-def fkeys_struct(request):
+def cons_struct(request):
     conn_params = fns.get_conn_params(request, update_db=True)
 
     if request.method == "POST" and request.GET.has_key('upd8'):
@@ -160,16 +140,26 @@ def fkeys_struct(request):
         for k in ['db', 'tbl', 'schm']:
             if request.GET.has_key(k): query_data[k] = request.GET.get(k)
         # decide query to run
-        if request.GET.get('upd8') in ('drop', 'delete',): query_type = 'drop_foreign_key'
+        if request.GET.get('upd8') in ('drop', 'delete',): query_type = 'drop_constraint'
         # run and return status of the executed query
         return qry.rpr_query(conn_params, query_type, query_data)
 
-    # foreign key definitions
-    tbl_fkdeys = sa.get_fkeys_definitn(conn_params, request.GET)
-    return base_struct(request, tbl_data=tbl_fkdeys, show_tbl_optns=True, subv='fkeys',
-        tbl_props = {'keys': (('name', 'key'), )},
+    # view and creation things
+    tbl_idxs = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
+    return base_struct(request, tbl_data=tbl_idxs, show_tbl_optns=True, subv='cons',
+        empty_err_msg="Table contains no constraints",
+        tbl_props = {'keys': (('name', 'key'), ('type', 'key'), )},
         tbl_optn_type= 'tbl_like',
-        empty_err_msg= 'This table has no foreign keys')
+        )
+
+
+def deps_struct(request):
+    conn_params = fns.get_conn_params(request, update_db=True)
+
+    # view and deletion things
+    tbl_deps = qry.get_dependencies(conn_params, fns.qd(request.GET))
+    return base_struct(request, tbl_data=tbl_deps, show_tbl_optns=False,
+        subv='deps', empty_err_msg="This table has no dependents")
 
 
 def insert(request):
@@ -242,27 +232,27 @@ def edit(request):
     else:
         f = forms.EditForm(tbl_struct=tbl_struct_data, dialect=conn_params['dialect'],
             tbl_indexes=tbl_indexes_data['rows'], data = request.POST)
-        if f.is_valid():
-            # two options during submission: update_row or insert_row
-            if f.cleaned_data['save_changes_to'] == 'insert_row':
-                # pretty straight forward (lifted from insert view above)
-                ret = qry.insert_row(conn_params, fns.qd(request.GET), 
-                    f.cleaned_data)
 
-                return HttpResponse(json.dumps(ret))
-            else:
-                indexed_cols = fns.parse_indexes_query(tbl_indexes_data['rows'])
-                ret = qry.update_row(conn_params, indexed_cols, 
-                    fns.qd(request.GET), f.cleaned_data)
-
-                return HttpResponse(json.dumps(ret))
-
-        else:
+        if not f.is_valid():
             # format and return form errors
             ret = {'status': 'fail', 
             'msg': fns.render_template(request,"tt_form_errors.html",
                 {'form': f}, is_file=True).replace('\n','')
             }
+            return HttpResponse(json.dumps(ret))
+        # from here on we are working on a valid form
+        # two options during submission: update_row or insert_row
+        if f.cleaned_data['save_changes_to'] == 'insert_row':
+            # pretty straight forward (lifted from insert view above)
+            ret = qry.insert_row(conn_params, fns.qd(request.GET), 
+                f.cleaned_data)
+
+            return HttpResponse(json.dumps(ret))
+        else:
+            indexed_cols = fns.parse_indexes_query(tbl_indexes_data['rows'])
+            ret = qry.update_row(conn_params, indexed_cols, 
+                fns.qd(request.GET), f.cleaned_data)
+
             return HttpResponse(json.dumps(ret))
 
 
@@ -272,14 +262,14 @@ def route(request):
         if request.GET.get('subv') == 'edit':
             return edit(request)
         return browse(request)
+
     elif request.GET.get('v') in ('structure', 'struct'):
-        if request.GET.get('subv') == 'idxs':
-            return idxs_struct(request)
+        if request.GET.get('subv') == 'cons':
+            return cons_struct(request)
         elif request.GET.get('subv') == 'deps':
             return deps_struct(request)
-        elif request.GET.get('subv') == 'fkeys':
-            return fkeys_struct(request)
         return cols_struct(request) # default
+
     elif request.GET.get('v') in ('insert', 'ins'):
         return insert(request)
     else:

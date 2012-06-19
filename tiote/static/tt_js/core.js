@@ -359,7 +359,7 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 			}
 			tds = null, ths = null;
 		}
-
+		// sync scrolling of 'tbl-body table' with '.tbl-header tbl'
 		if (cont.getElement('.tbl-body table') != undefined
 			&& cont.getElement('.tbl-header table') != undefined) {
 			// variables needed
@@ -372,20 +372,22 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 			});
 			// add the width of scrollbar to min-width property of ".tbl-header td.last-td"
 			var w = tblbody_tbl.getScrollSize().x - tblhead_tbl.getScrollSize().x;
-			w = w + 25 + 7;
+			w = w + 25 + 7; // magic numbers they worked though;
 			tblhead_tbl.getElement('td.last-td').setStyle('min-width', w);	
 		}
 	});
 	
 	// behaviour
-	$$('table.sql').each(function(tbl, tbl_in){
+	var tbls = $$('table.sql');
+	for (var tbl_in= 0 ; tbl_in < tbls.length; tbl_in++) {
+		var tbl = tbls[tbl_in];
 		var html_table = new HtmlTable($(tbl))
 		pg.tbls.include(html_table);
 		make_checkable(html_table);
 		// attach the variables passed down as javascript objects to the 
 		// table object
 		html_table['vars'] = {}; var data;// containers
-		
+
 		if (tbl.get('data')) {
 			data = {}
 			tbl.get('data').split(';').each(function(d){
@@ -395,46 +397,47 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 			html_table['vars']['data'] = data; // schema: [key: value]
 		}
 		
-		if (tbl.get('keys')) {
-			data = []; // data[[0,1,2],...] indexes 0: name of column,
-							// 1 : index type
-							// 2 : column position in tr
-			tbl.get('keys').split(';').each(function(d){
-				var ar = d.split(':');
-				if (ar[0] != "") data.include(ar);
-			});
-			// loop through the tds int .tbl-header to see which corresponds to the keys
-			$$('.tbl-header table')[tbl_in].getElements('td').each(function(th, th_in){
-				for (var i = 0; i < data.length; i++) {
-					var _colname = $E('div span.column-name', th);
-					if (_colname == null) 
-						continue;
-					if (_colname.get('text') == data[i][0] )
-						data[i].include(th_in);
+		if (! tbl.get('keys'))
+			continue; // this conditions is needed to go on till end of loop
+		
+		data = []; // data[[0,1,2],...] indexes 0: name of column,
+						// 1 : index type
+						// 2 : column position in tr
+		tbl.get('keys').split(';').each(function(d){
+			var ar = d.split(':');
+			if (ar[0] != "") data.include(ar);
+		});
+		// loop through the tds int .tbl-header to see which corresponds to the keys
+		$$('.tbl-header table')[tbl_in].getElements('td').each(function(th, th_in){
+			for (var i = 0; i < data.length; i++) {
+				var _colname = $E('div span.column-name', th);
+				if (_colname == null) 
+					continue;
+				if (_colname.get('text') == data[i][0] )
+					data[i].include(th_in);
+			}
+		});
+
+		html_table['vars']['keys'] = data; // schema: [column, key_type, column index]
+
+		// handle a.display_row(s) click events
+		tbl.getElements('a.display_row').addEvent('click', function(e) {
+			var al_in = parseInt( e.target.getParent('tr').id.replace('row_', '') );
+			var where_stmt = generate_where(html_table, al_in, true);
+			// make xhr request
+			new XHR({
+				url: generate_ajax_url('q=get_row&type=fn') ,
+				spinnerTarget: tbl,
+				onSuccess : function(text, xml) {
+					showDialog("Entry", text, {
+						offsetTop: null, width: 475, hideFooter: true,
+						overlayOpacity: 0, overlayClick: false
+					});
 				}
-			});
+			}).post(where_stmt);
+		});
 
-			html_table['vars']['keys'] = data; // schema: [column, key_type, column index]
-			
-			// handle a.display_row(s) click events
-			tbl.getElements('a.display_row').addEvent('click', function(e) {
-				var al_in = parseInt( e.target.getParent('tr').id.replace('row_', '') );
-				var where_stmt = generate_where(html_table, al_in, true);
-				// make xhr request
-				new XHR({
-					url: generate_ajax_url('q=get_row&type=fn') ,
-					spinnerTarget: tbl,
-					onSuccess : function(text, xml) {
-						showDialog("Entry", text, {
-							offsetTop: null, width: 475, hideFooter: true,
-							overlayOpacity: 0, overlayClick: false
-						});
-					}
-				}).post(where_stmt);
-			});
-		}
-
-	});
+	};
 
 }
 
@@ -549,8 +552,8 @@ function do_action(tbl, e) {
 		else if (navObject['v'] == 'struct') {
 			if (navObject['subv'] == 'idxs')
 				msg += where_stmt.contains(';') ? 'indexes': 'index';
-			else if (navObject['subv'] == 'fkeys')
-				msg += where_stmt.contains(';') ? 'foreign keys': 'foreign key';
+			else if (navObject['subv'] == 'cons')
+				msg += where_stmt.contains(';') ? 'constraints': 'constraint';
 			else
 				// it defaults to columns if there is no subv or the subv contains 'cols'
 				msg += where_stmt.contains(';') ? 'columns': 'column';
@@ -670,8 +673,7 @@ Page.prototype.completeForm = function(dialog_handler){
 	
 	var _o = page_hash();
 	if (_dialect == 'mysql' && _o['sctn'] == 'tbl' && _o['v'] == 'struct') {
-		if (Object.keys(_o).contains('subv') && _o['subv'] != 'cols') {
-		}
+		if (Object.keys(_o).contains('subv') && _o['subv'] != 'cols') {}
 		else {
 			updateSelectNeedsValues();					
 		}

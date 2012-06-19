@@ -51,7 +51,7 @@ class BareTableView(View):
 
         # build table properties
         if not hasattr(self, 'tbl_props'): self.tbl_props = {}
-        if self.tbl_data.has_key('keys'):
+        if self.tbl_data.has_key('keys') and self.tbl_data.get('keys') != None:
             self.tbl_props['keys'] = self.tbl_data['keys']['rows']
         self.tbl_props['count'] = self.tbl_data['count'],
 

@@ -132,18 +132,32 @@ def generate_query(query_type, query_data=None):
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
     
-    elif query_type == 'indexes':
+    elif query_type == 'constraints':
         stmt = """
         SELECT 
-            kcu.column_name, kcu.constraint_name, tc.constraint_type
+            con.contype, -- f, c, p, u 
+            con.conname,  --sometimes annoyingly long
+            con.conkey, -- constrained columns
+            con.confkey, -- referred columns of a foreign key
+            cl.relname, -- the table the fkey refers to
+            con.consrc -- definition of a check constraint
+        
         FROM 
-            information_schema.key_column_usage AS kcu
-            LEFT OUTER JOIN information_schema.table_constraints AS tc 
-            ON (kcu.constraint_name = tc.constraint_name) 
-        WHERE 
-            kcu.table_name= :tbl AND
-            kcu.table_schema= :schm AND
-            kcu.table_catalog= :db
+            pg_constraint AS con
+            LEFT OUTER JOIN pg_class AS cl ON cl.oid = con.confrelid
+            
+        WHERE
+            con.connamespace = (
+                SELECT oid 
+                FROM pg_namespace 
+                WHERE nspname = :schm
+            )  AND
+            
+            con.conrelid = (
+                SELECT oid 
+                FROM pg_class 
+                WHERE relname = :tbl
+            )
         """
         q0 = text(stmt, bindparams=bindparams)
         return (q0,)
@@ -182,6 +196,23 @@ def generate_query(query_type, query_data=None):
             table_schema = :schm AND 
             table_name = :tbl
         ORDER BY ordinal_position ASC
+        """
+        q0 = text(stmt, bindparams=bindparams)
+        return (q0, )
+
+    elif query_type == 'column_assoc':
+        stmt = """
+        SELECT
+            ordinal_position AS pos,
+            column_name AS column
+
+        FROM
+            information_schema.columns
+
+        WHERE 
+            table_catalog = :db AND 
+            table_schema = :schm AND 
+            table_name = :tbl
         """
         q0 = text(stmt, bindparams=bindparams)
         return (q0, )
@@ -318,6 +349,7 @@ def col_defn(col_data, i):
 
     used with iterations, i = str(i) where i is index of current iterations
     '''
+    # map some keys to meaningful variable names
     type_field = col_data['type_'+i]
     length_field = col_data['length_'+i]
     name_field = col_data['name_'+i]

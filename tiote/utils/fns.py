@@ -22,6 +22,7 @@ _abbr = {
     'dbs': 'databases',
     'deps': 'dependents',
     'fkeys': 'foreign keys',
+    'cons': 'constraints',
 }
 
 # returns page templates for each view
