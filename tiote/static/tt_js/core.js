@@ -479,7 +479,7 @@ Page.prototype.addTableOpts = function() {
 //				pg.loadPage(false)
 				reloadPage();
 			else 
-				do_action(htm_tbl, e);
+				do_action_wrapper(htm_tbl, e);
 		});
 
 		// disable or enable if no row is selected or rows are selected respectively.
@@ -521,72 +521,98 @@ function edit_view(where_stmt) {
 }
 
 
-function do_action(tbl, e) {
-//	console.log('do_action()!');
-	if (!tbl.getSelected()) return; // necessary condition to begin
-	var where_stmt = where_from_selected(tbl);
-	if (!where_stmt) return; // empty where stmt
-	var msg = "Are you sure you want to ";
-	// describe the action to be performed
-	var action;
-	if (e.target.hasClass("action_edit")) action = 'edit';
-	else if (e.target.hasClass("action_delete")) action = 'delete';
-	else if (e.target.hasClass("action_drop")) action = "drop";
-	else if (e.target.hasClass("action_empty")) action = "empty";
-	else if (e.target.hasClass("action_reset")) action = "reset";
-	
-	msg += action + " the selected ";
-	var navObject = page_hash();
-	// update the dialog message to include the specific type of object 
-	// and pluralize if more than one object is to worked upon
-	if (navObject['sctn'] == "db") {
-		if (Object.keys(navObject).contains('subv') && navObject['subv'] == 'seqs')
-			msg += where_stmt.contains(';') ? "sequences" : "sequence";
-		else
-			// default situation. translates to tbl view of section db
-			msg += where_stmt.contains(';') ? "tables" : "table";
+function do_action_wrapper(tbl, e) {
+	if (!tbl.getSelected())// necessary condition to begin
+		return;
+
+	// control decider
+	var can_do_action = false;
+	// determine the action to be performed
+	var action = '';
+	var clses= e.target.get('class').split(' ');
+	for (var _in= 0; _in < clses.length; _in++) {
+		var cls = clses[_in]
+		if (! cls.contains('action_'))
+			continue
+		action = cls.replace("action_", "");
 	}
-	else if (navObject['sctn'] == "tbl") {
-		if (navObject['v'] == 'browse')
-			msg += where_stmt.contains(';') ? "rows" : "row";
-		else if (navObject['v'] == 'struct') {
-			if (navObject['subv'] == 'idxs')
-				msg += where_stmt.contains(';') ? 'indexes': 'index';
-			else if (navObject['subv'] == 'cons')
-				msg += where_stmt.contains(';') ? 'constraints': 'constraint';
+	/// generate msg to be displayed in the dialog
+	/// while generating the msg determine if the action does not need further confirmation
+	/// probably if the action doesn't pose serious unchangeable side effects
+		var msg = "Are you sure you want to " + action + " the selected ";
+		var where_stmt = where_from_selected(tbl); // string to be posted
+		var navObject = page_hash();
+		// update the dialog message to include the specific type of object 
+		// and pluralize if more than one object is to worked upon
+		if (navObject['sctn'] == "db") {
+			if (Object.keys(navObject).contains('subv') && navObject['subv'] == 'seqs')
+				if (action == 'reset')
+					can_do_action = true
+				else
+					msg += where_stmt.contains(';') ? "sequences" : "sequence";
 			else
-				// it defaults to columns if there is no subv or the subv contains 'cols'
-				msg += where_stmt.contains(';') ? 'columns': 'column';
+				// default situation. translates to tbl view of section db
+				msg += where_stmt.contains(';') ? "tables" : "table";
 		}
-	}
-	else if (navObject['sctn'] == 'hm' && navObject['v'] == "dbs")
-		msg += where_stmt.contains(";") ? "databases": "database";
-	// confirm if intention is to be carried out
-	var confirmDiag = new SimpleModal({'btn_ok': 'Yes', overlayClick: false,
-		draggable: true, offsetTop: 0.2 * screen.availHeight
-	});
-	confirmDiag.show({
-		model: 'confirm', 
-		callback: function() {
-			if (action == 'edit') {
-				edit_view(where_stmt);
-			} else {
-				new XHR({
-					url: generate_ajax_url() + '&upd8=' + action,
-					spinnerTarget: $(tbl), 
-					onSuccess: function(text, xml) {
-						var resp = JSON.decode(text);
-						if (resp['status'] == "fail") {
-							showDialog("Action not successful", resp['msg']);
-						} else if (resp['status'] == 'success')
-							reloadPage();
-					}
-				}).post({'where_stmt': where_stmt});
+		else if (navObject['sctn'] == "tbl") {
+			if (navObject['v'] == 'browse')
+				// deletn and dropping of data is not really a very bad thing
+				can_do_action = true;
+//				msg += where_stmt.contains(';') ? "rows" : "row";
+			else if (navObject['v'] == 'struct') {
+				if (navObject['subv'] == 'idxs')
+					msg += where_stmt.contains(';') ? 'indexes': 'index';
+				else if (navObject['subv'] == 'cons')
+					msg += where_stmt.contains(';') ? 'constraints': 'constraint';
+				else
+					// it defaults to columns if there is no subv or the subv contains 'cols'
+					msg += where_stmt.contains(';') ? 'columns': 'column';
 			}
-		}, 
-		title: 'Confirm intent',
-		contents: msg
-	});
+		}
+		else if (navObject['sctn'] == 'hm' && navObject['v'] == "dbs")
+			msg += where_stmt.contains(";") ? "databases": "database";
+	
+	// local function that provides a way to pass local variables to a non-local function
+	var do_action_caller = function() {
+		do_action(action, where_stmt, tbl);
+	}
+	
+	/// check if can_do_action has been set to true when generating the message.
+	/// if it has then just do the action, if it hasn't then confirm if the selected
+	/// action is desirable
+		if (can_do_action)
+			do_action_caller();
+		else {
+			// confirm if intention is to be carried out
+			var confirmDiag = new SimpleModal({'btn_ok': 'Yes', overlayClick: false,
+				draggable: true, offsetTop: 0.2 * screen.availHeight
+			});
+			confirmDiag.show({
+				model: 'confirm',
+				callback: do_action_caller, 
+				title: 'Confirm intent',
+				contents: msg
+			});		
+		}
+}
+
+
+function do_action(action, where_stmt, tbl) {
+	if (action == 'edit') {
+		edit_view(where_stmt);
+	} else {
+		new XHR({
+			url: generate_ajax_url() + '&upd8=' + action,
+			spinnerTarget: $(tbl), 
+			onSuccess: function(text, xml) {
+				var resp = JSON.decode(text);
+				if (resp['status'] == "fail") {
+					showDialog("Action not successful", resp['msg']);
+				} else if (resp['status'] == 'success')
+					reloadPage();
+			}
+		}).post({'where_stmt': where_stmt});
+	}	
 }
 
 
@@ -838,23 +864,28 @@ function hide(a) {
 
 function updateSelectNeedsValues(){
 //	console.log('updateSelectNeedsValues');
-	$$('.tt_form .compact-form select').each(function(sel_item){
-		if (sel_item.get('class').contains('needs:')) {
-			// find definition statement
-			var stmt = '';
-			sel_item.get('class').split(' ').each(function(class_item){
-				if (class_item.contains('needs') )
-					stmt = class_item;
-			});
-			//
-			var stmt_cond = stmt.split(':');
-			sel_item.addEvent('change', function(e){
-				if (stmt_cond[2].split('|').contains(e.target.value))
-					e.target.getParent('table').getElements('.'+stmt_cond[1]+'-needed').removeClass('hidden');
-				else
-					e.target.getParent('table').getElements('.'+stmt_cond[1]+'-needed').addClass('hidden');
-			});
-		}
-	});
+	var selects = $$('.tt_form .compact-form select');
+	for (var _in = 0; _in < selects.length; _in++) {
+		var sel_item = selects[_in];
+		if (! sel_item.get('class').contains('needs:'))
+			continue;
+		
+		// find definition statement
+		var stmt = '';
+		sel_item.get('class').split(' ').each(function(class_item){
+			if (class_item.contains('needs') )
+				stmt = class_item;
+		});
+		//
+		var stmt_cond = stmt.split(':');
+		sel_item.addEvent('change', function(e){
+			if (stmt_cond[2].split('|').contains(e.target.value))
+				e.target.getParent('table').getElements('.'+stmt_cond[1]+'-needed').removeClass('hidden');
+			else
+				e.target.getParent('table').getElements('.'+stmt_cond[1]+'-needed').addClass('hidden');
+		});
+		
+	}
+
 }
 
