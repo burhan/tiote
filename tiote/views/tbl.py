@@ -206,7 +206,7 @@ def edit(request):
     conn_params = fns.get_conn_params(request, update_db=True)
     tbl_struct_data = qry.rpr_query(conn_params, 'raw_table_structure', fns.qd(request.GET))
     # keys = ['column','type','null','default','character_maximum_length','numeric_precision','numeric_scale']
-    tbl_indexes_data = qry.rpr_query(conn_params, 'indexes', fns.qd(request.GET))
+    tbl_indexes_data = qry.rpr_query(conn_params, 'primary_keys', fns.qd(request.GET))
 
     # generate the form(s)
     if request.method == 'POST' and request.POST.get('where_stmt'):
@@ -256,6 +256,33 @@ def edit(request):
             return HttpResponse(json.dumps(ret))
 
 
+def ops(request):
+    conn_params = fns.get_conn_params(request, update_db=True)
+    extra_context = SortedDict({'dialect': conn_params['dialect']})
+
+    if conn_params['dialect'] == 'postgresql':
+        # table edit form
+        schema_list = qry.common_query(conn_params, 'schema_list', request.GET)['rows']
+        tblEditForm = forms.get_dialect_form('TableEditForm', conn_params['dialect'])
+        extra_context['tbl_edit_form'] = tblEditForm( tbl_name = request.GET.get('tbl'),
+                tbl_schema = request.GET.get('schm'),
+                schemas = schema_list,
+            )
+        # table vacuum form
+        extra_context['tbl_vacuum_form'] = forms.TableVacuumForm()
+
+    if conn_params['dialect'] == 'mysql':
+        # table edit form
+        charset_list = qry.common_query(conn_params, 'charset_list', request.GET)['rows']
+        tblEditForm = forms.get_dialect_form('TableEditForm', conn_params['dialect'])
+        extra_context['tbl_edit_form'] = tblEditForm(tbl_name= request.GET.get('tbl'),
+                charsets = charset_list
+            )
+
+
+    retrn = fns.render_template(request, 'tbl/tt_ops.html', extra_context, is_file=True )
+    return HttpResponse(retrn)
+
 # view router
 def route(request):
     if request.GET.get('v') == 'browse':
@@ -272,5 +299,7 @@ def route(request):
 
     elif request.GET.get('v') in ('insert', 'ins'):
         return insert(request)
+    elif request.GET.get('v') in ('operations', 'ops'):
+        return ops(request)
     else:
         return fns.http_500('malformed URL of section "table"')

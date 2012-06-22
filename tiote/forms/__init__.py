@@ -422,7 +422,7 @@ def get_dialect_form(form_name, dialect):
     }
     dialects_order = ['postgresql', 'mysql']
 
-    return dialect_forms[form_name][ dialects_order['dialect'] ]
+    return dialect_forms[form_name][ dialects_order.index(dialect) ]
 
 
 

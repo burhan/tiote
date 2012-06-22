@@ -1,0 +1,78 @@
+<style type="text/css">
+h5.heading {
+	text-transform: none;
+	font-weight: normal;
+}
+
+.tbl-operatn {
+	margin-bottom: 10px;
+}
+p {
+	font-size: 12px;
+}
+</style>
+<div class='msg-placeholder'></div>
+<div class='row'>
+	<div class="span5 tbl-operatn">
+		<h5 class="heading">Edit Table</h5>
+		<p> Hit the edit table button if you want to perform one of the following
+			<ul>
+			<li> Rename the table</li>
+		{% if dialect == 'postgresql' %}
+			<li>Change the schema which the table is on</li>
+			<li>Add or change the comment on the table</li>
+			<li>If an empty comment is sent, the comment on the table if it exists would be dropped</li>
+		{% elif dialect == 'mysql' %}
+			<li>Change the character set used in the table</li>
+		{% endif %}
+			</ul>
+		</p>
+		<input type="submit" class='btn submit-button' value="Edit Table"/>
+		<div class="" style="display:none;">
+		{% include 'tbl/tbl_ops_forms.html' with form=tbl_edit_form form_name='tbl_edit_form' %}</div>
+	</div>
+	{% if dialect == 'postgresql' %}
+	<div class="span5 tbl-operatn" >
+		<h5 class="heading">Vacuum Table </h5>
+		<p><ul>
+			<li>To recover or reuse disk space occupied by updated or deleted rows.</li>
+    		<li>To update data statistics used by the PostgreSQL query planner.</li>
+    		<li>To protect against loss of very old data due to transaction ID wraparound.</li>
+		</ul></p>
+		<input type="submit" class='btn submit-button' value="Vacuum Table"/>
+		<div class="values-needed" style="display:none">
+		{% include 'tbl/tbl_ops_forms.html' with form=tbl_vacuum_form form_name='tbl_vacuum_form' %}
+		</div>
+	</div>
+	<div class="span5 tbl-operatn">
+		<h5 class="heading">Analyze Table </h5>
+		<p><ul>
+			<li>ANALYZE collects statistics about the contents of tables in the database, and stores the results in a system catalog. </li>
+			<li>Subsequently, the query planner uses these statistics to help determine the most efficient execution plans for queries. </li>
+			</ul></p>
+		<input type="submit" class='btn submit-button' value="Analyze Table &rarr;"/>
+	</div>
+	<div class="span5 tbl-operatn">
+		<h5 class="heading">Reindex Table </h5>
+		<p><ul>
+		<li>REINDEX rebuilds an index using the data stored in the index's table, replacing the old copy of the index.</li> 
+		</ul></p>
+		<input type="submit" class='btn submit-button' value="Reindex Table &rarr;"/>
+	</div>
+	<div class="span5 tbl-operatn">
+		<h5 class="heading">Dropping this table</h5>
+		<p>
+			If you want to drop this table, go to the overview view of this database and drop the table from there. When viewing tables there is a lock on them.
+		</p>
+	{% endif %}
+</div>
+
+<script type="text/javascript" ajaxKey="{{ajaxKey}}">
+window.addEvent('domready', function(){
+/// on clicking each of the buttons it should give a form
+/// if there is a form associated with it.
+/// else it should send a request indicating the function to be ran 
+	console.log('inline javascript');
+});
+</script>
+

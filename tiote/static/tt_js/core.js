@@ -129,7 +129,7 @@ Page.prototype.updateTopMenu = function(data){
 	var links = new Hash();
 	// all the links that can be displayed in the top menu
 	var l = ['query', 'import', 'export', 'insert', 'structure', 'overview',
-		'browse', 'update', 'search', 'home', 'users', 'databases'];
+		'browse', 'update', 'search', 'home', 'users', 'databases', 'operations'];
 	
 	l.each(function(item){
 		links[item] = new Element('a', {'text': item});
@@ -146,7 +146,7 @@ Page.prototype.updateTopMenu = function(data){
 		prefix_str = '#sctn=db';
 		suffix = ['&db=']
 	} else if (data['sctn'] == 'tbl') {
-		order = ['browse', 'structure', 'insert', 'query', 'import', 'export'];
+		order = ['browse', 'structure', 'insert', 'operations', 'query', 'import', 'export'];
 		prefix_str = '#sctn=tbl';
 		suffix = ['&db=','&tbl='];
 	}
@@ -177,6 +177,7 @@ Page.prototype.updateTopMenu = function(data){
 		ela.adopt(elmt);
 		aggregate_links.include(ela);
 	});
+	
 	var nava = new Element('ul',{'class':'nav'}); 
 	if ($$('div.topbar ul.nav'))	$$('div.topbar ul.nav')[0].destroy();
 	aggregate_links.inject(nava);
@@ -250,7 +251,7 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 	// autosize the sidebar to the available height after below the #topbar
 	var resize_sidebar = function() {
 		if ($('sidebar').getScrollSize().y > (getHeight() - 50) || 
-		$('sidebar').getSize().y < (getHeight() - 50)) {
+				$('sidebar').getSize().y < (getHeight() - 50)) {
 			$('sidebar').setStyle('height', getHeight() - 50);
 		}
 	};
@@ -437,7 +438,7 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 			}).post(where_stmt);
 		});
 
-	};
+	}
 
 }
 
@@ -560,7 +561,9 @@ function do_action_wrapper(tbl, e) {
 				can_do_action = true;
 //				msg += where_stmt.contains(';') ? "rows" : "row";
 			else if (navObject['v'] == 'struct') {
-				if (navObject['subv'] == 'idxs')
+				if (! action in ['delete', 'drop'])
+					can_do_action = true;
+				else if (navObject['subv'] == 'idxs')
 					msg += where_stmt.contains(';') ? 'indexes': 'index';
 				else if (navObject['subv'] == 'cons')
 					msg += where_stmt.contains(';') ? 'constraints': 'constraint';
@@ -853,14 +856,6 @@ var XHR = new Class({
 	
 });
 
-
-function show(a) {
-	$(a).style.display = 'block';
-}
-
-function hide(a) {
-	$(a).style.display = 'none';
-}
 
 function updateSelectNeedsValues(){
 //	console.log('updateSelectNeedsValues');

@@ -23,6 +23,7 @@ _abbr = {
     'deps': 'dependents',
     'fkeys': 'foreign keys',
     'cons': 'constraints',
+    'ops': 'operations',
 }
 
 # returns page templates for each view
@@ -179,9 +180,12 @@ def parse_indexes_query(tbl_indexes, needed_indexes=None):
     _dict = {}
 
     for row in tbl_indexes:
-        if needed_indexes != None and row[2] not in needed_indexes: continue
-        if _dict.has_key(row[0]): _dict[ row[0] ].append( row[2] )
-        else: _dict[ row[0] ] = [ row[2] ]
+        if needed_indexes != None and row[2] not in needed_indexes: 
+            continue
+        if _dict.has_key(row[0]): 
+            _dict[ row[0] ].append( row[2] )
+        else: 
+            _dict[ row[0] ] = [ row[2] ]
     return _dict
 
 

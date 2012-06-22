@@ -2,6 +2,7 @@ from django import forms
 from django.core import validators
 from django.utils.datastructures import SortedDict
 from common import *
+from tiote.utils import *
 
 # New Database Form
 class mysqlDbForm(forms.Form):
@@ -71,19 +72,20 @@ class mysqlUserForm(forms.BaseForm):
 
 class mysqlTableEditForm(forms.BaseForm):
 
-    def __init__(self, tbl_name, current_charset, charsets=[], **kwargs):
+    def __init__(self, tbl_name=None, current_charset=None, charsets=[], **kwargs):
         f = SortedDict()
 
         f['name'] = forms.CharField(
-                widget = form.TextInput(attrs={'class':'required'}),
+                widget = forms.TextInput(attrs={'class':'required'}),
                 initial = tbl_name,
             )
 
-        f['charset'] = forms.CharField(
+        f['charset'] = forms.ChoiceField(
                 choices = fns.make_choices(charsets, begin_empty=True),
-                initial = current_charset,
+                # initial = current_charset,
             )
 
+        self.base_fields = f
         super(mysqlTableEditForm, self).__init__(**kwargs)
 
 

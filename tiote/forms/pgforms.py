@@ -2,6 +2,7 @@ from django import forms
 from django.core import validators
 from django.utils.datastructures import SortedDict
 from common import *
+from tiote.utils import *
 
 
 class pgDbForm(forms.BaseForm):
@@ -94,7 +95,7 @@ class pgSequenceForm(forms.Form):
 
 
 
-class pgEditTableForm(forms.BaseForm):
+class pgTableEditForm(forms.BaseForm):
 
     def __init__(self, tbl_name=None, tbl_schema=None, 
             # tbl_owner = None,
@@ -107,7 +108,7 @@ class pgEditTableForm(forms.BaseForm):
         f['name'] = forms.CharField(
                 max_length= 64,
                 widget= forms.TextInput(attrs={'class':'required'}),
-                intial = tbl_name,
+                initial = tbl_name,
             )
 
         # f['owner'] = forms.ChoiceField(
@@ -120,10 +121,12 @@ class pgEditTableForm(forms.BaseForm):
                 initial = tbl_schema
             )
 
-        f['comment'] = forms.TextField(required=False, initial=tbl_comment)
+        f['comment'] = forms.CharField(required=False, 
+                widget = forms.Textarea
+            )
 
         self.base_fields = f
-        super(EditTableForm, self).init(**kwargs)
+        super(pgTableEditForm, self).__init__(**kwargs)
 
 
 class TableVacuumForm(forms.Form):

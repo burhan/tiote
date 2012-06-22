@@ -215,7 +215,7 @@ function disable_unimplemented_links(){
 	var implemented = {
 		'hm': ['home', 'query', 'databases'],
 		'db': ['overview', 'query'],
-		'tbl': ['browse', 'structure', 'insert', 'query']
+		'tbl': ['browse', 'structure', 'insert', 'query', 'operations']
 	}
 	var section = page_hash()['sctn']
 	$$('.nav a').each(function(nav_link){
@@ -275,3 +275,13 @@ function tweenBgToWhite(el) {
 	});
 	elFx.start('#fff');
 }
+
+
+function show(a) {
+	$(a).style.display = 'block';
+}
+
+function hide(a) {
+	$(a).style.display = 'none';
+}
+

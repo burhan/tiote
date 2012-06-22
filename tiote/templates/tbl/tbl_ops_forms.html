@@ -1,0 +1,12 @@
+<form class="tt_form form-stacked" action="" method="post" accept-charset="utf-8">
+	{% csrf_token %}
+	{% comment %} this determines to the post which form this is {% endcomment %}
+	<input type="hidden" value="{{form_name}}" name='form_type' />
+	{% for field in form %}
+	<div class="clearfix">
+		<label for="id_{{field.html_name}}">{{field.label}}<span class="help_text">{{field.help_text}}</span></label>
+		<div class='input'>{{ field }}</div>
+	</div>
+	{% endfor %}
+	<div class="actions"><input type="submit" class='btn submit-button' value="Submit &rarr;"/></div>
+</form>
