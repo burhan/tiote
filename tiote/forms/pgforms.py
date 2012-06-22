@@ -4,7 +4,7 @@ from django.utils.datastructures import SortedDict
 from common import *
 
 
-class pgsqlDbForm(forms.BaseForm):
+class pgDbForm(forms.BaseForm):
     
     def __init__(self, templates=None, users=None, charsets=None, **kwargs):
         f = SortedDict()
@@ -25,7 +25,7 @@ class pgsqlDbForm(forms.BaseForm):
         forms.BaseForm.__init__(self, **kwargs)
 
 
-class pgsqlUserForm(forms.BaseForm):
+class pgUserForm(forms.BaseForm):
     
     def __init__(self, groups=None, dbs=None, **kwargs):
         f = SortedDict()
@@ -62,7 +62,7 @@ class pgsqlUserForm(forms.BaseForm):
 
 
 
-class pgsqlSequenceForm(forms.Form):
+class pgSequenceForm(forms.Form):
     
     name = forms.CharField(
         widget=forms.TextInput(attrs={'class':'required'})
@@ -91,5 +91,45 @@ class pgsqlSequenceForm(forms.Form):
         label = 'Can cycle?', required = False,
         widget = forms.CheckboxInput()
     )
+
+
+
+class pgEditTableForm(forms.BaseForm):
+
+    def __init__(self, tbl_name=None, tbl_schema=None, 
+            # tbl_owner = None,
+            users=[], schemas=[], tbl_comment='', tablespace=[], **kwargs):
+
+        if tbl_name == None or tbl_schema == None:
+            raise TypeError('tbl_name or tbl_schema is required')
+
+        f = SortedDict()
+        f['name'] = forms.CharField(
+                max_length= 64,
+                widget= forms.TextInput(attrs={'class':'required'}),
+                intial = tbl_name,
+            )
+
+        # f['owner'] = forms.ChoiceField(
+        #         choices = fns.make_choices(users, begin_empty=True),
+        #         initial = tbl_owner
+        #     )
+
+        f['schema'] = forms.ChoiceField(
+                choices = fns.make_choices(schemas, begin_empty=True),
+                initial = tbl_schema
+            )
+
+        f['comment'] = forms.TextField(required=False, initial=tbl_comment)
+
+        self.base_fields = f
+        super(EditTableForm, self).init(**kwargs)
+
+
+class TableVacuumForm(forms.Form):
+
+    full = forms.BooleanField(required=False)
+    analyze = forms.BooleanField(required=False)
+    freeze = forms.BooleanField(required=False)
 
 

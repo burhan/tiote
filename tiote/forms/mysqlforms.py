@@ -69,3 +69,21 @@ class mysqlUserForm(forms.BaseForm):
         forms.BaseForm.__init__(self, **kwargs)
         
 
+class mysqlTableEditForm(forms.BaseForm):
+
+    def __init__(self, tbl_name, current_charset, charsets=[], **kwargs):
+        f = SortedDict()
+
+        f['name'] = forms.CharField(
+                widget = form.TextInput(attrs={'class':'required'}),
+                initial = tbl_name,
+            )
+
+        f['charset'] = forms.CharField(
+                choices = fns.make_choices(charsets, begin_empty=True),
+                initial = current_charset,
+            )
+
+        super(mysqlTableEditForm, self).__init__(**kwargs)
+
+

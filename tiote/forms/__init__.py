@@ -6,8 +6,8 @@ from django.utils.safestring import SafeUnicode
 from tiote.utils import *
 # children modules (in files) of this module
 from common import *
-from pgsql import *
-from mysql import *
+from pgforms import *
+from mysqlforms import *
 
 
 class InsertForm(forms.BaseForm):
@@ -402,4 +402,27 @@ class ForeignKeyForm(forms.BaseForm):
 
         self.fields = f
         super(ForeignKeyForm, self).__init__(dialect, **kwargs)
+
+
+def get_dialect_form(form_name, dialect):
+    '''
+    If there are two very different implementations of a form for the same functions.
+    they would be listed in their dialect order as described below in dialect_forms
+
+    Then this function would be used to get the dialect specific information of that form.
+    very boring function. I even deleted it once.
+
+
+    structure of dialect_forms:
+        { 'form_name': [ postgresql version of form_name, mysql version of form_name] }
+    '''
+    dialect_forms = {
+        # 'DbForm': [pgsqlDbForm, mysqlDbForm],
+        'TableEditForm': [pgTableEditForm, mysqlTableEditForm],
+    }
+    dialects_order = ['postgresql', 'mysql']
+
+    return dialect_forms[form_name][ dialects_order['dialect'] ]
+
+
 
