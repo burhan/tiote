@@ -2,11 +2,22 @@
 	{% csrf_token %}
 	{% comment %} this determines to the post which form this is {% endcomment %}
 	<input type="hidden" value="{{form_name}}" name='form_type' />
-	{% for field in form %}
-	<div class="clearfix">
-		<label for="id_{{field.html_name}}">{{field.label}}<span class="help_text">{{field.help_text}}</span></label>
-		<div class='input'>{{ field }}</div>
+	{% if form_name == 'tbl_vacuum_form' %}
+		{% comment %}vacuum forms is a stack of checkboxes so It would be nice if the fields are part of their label elements{% endcomment %}
+		{% for field in form %}
+		<label for="id_{{field.html_name}}">
+			{{ field }}<span style="padding-left:10px;vertical-align:top;">{{field.label}}</span></label>
+		{% endfor %}
+	{% else %}
+		{% for field in form %}
+		<div class="clearfix">
+			<label for="id_{{field.html_name}}">{{field.label}}<span class="help_text">{{field.help_text}}</span></label>
+			<div class='input'>{{ field }}</div>
+		</div>
+		{% endfor %}
+	{% endif %}
+	<div class="actions">
+		<input type="submit" class='btn submit-button' value="Submit &rarr;"/>
+		<input type="submit" class="btn submit-button close-form" value="close form" />
 	</div>
-	{% endfor %}
-	<div class="actions"><input type="submit" class='btn submit-button' value="Submit &rarr;"/></div>
 </form>

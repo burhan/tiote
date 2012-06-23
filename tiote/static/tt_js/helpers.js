@@ -1,3 +1,34 @@
+/// some lifted utility functions
+	function show(a) {
+		$(a).style.display = 'block';
+	}
+
+	function hide(a) {
+		$(a).style.display = 'none';
+	}
+
+	var $E = function(selector, filter) {
+		return ($(filter) || document).getElement(selector);
+	};
+
+	var $ES = function(selector, filter) {
+		return ($(filter) || document).getElements(selector);
+	};
+
+	function getWindowWidth() {
+		if (window.innerWidth)
+			return window.innerWidth;
+		else
+			return document.documentElement.clientWidth;
+	}
+
+	function getWindowHeight() {
+		if (window.innerHeight)
+			return window.innerHeight;
+		else
+			return document.documentElement.clientHeight;
+	}
+
 
 function generate_ajax_url(prefix
 //		, extra_data
@@ -94,14 +125,6 @@ function runXHRJavascript(){
 }
 
 
-var $E = function(selector, filter) {
-	return ($(filter) || document).getElement(selector);
-};
-
-var $ES = function(selector, filter) {
-	return ($(filter) || document).getElements(selector);
-};
-
 function redirectPage(context){
 	nav.state.empty();
 	nav.set(context);
@@ -140,21 +163,6 @@ function highlightActiveMenu(){
 			item.getParent().addClass('active');
 		}
 	});
-}
-
-
-function getWindowWidth() {
-	if (window.innerWidth)
-		return window.innerWidth;
-	else
-		return document.documentElement.clientWidth;
-}
-
-function getWindowHeight() {
-	if (window.innerHeight)
-		return window.innerHeight;
-	else
-		return document.documentElement.clientHeight;
 }
 
 function tbl_pagination(total_count, limit, offset) {
@@ -277,11 +285,15 @@ function tweenBgToWhite(el) {
 }
 
 
-function show(a) {
-	$(a).style.display = 'block';
-}
-
-function hide(a) {
-	$(a).style.display = 'none';
+function show_block(ctrller, block_id, type) {
+	// shower must be a clickable: button or input:submit
+	type = type || false;
+	
+	ctrller.addEvent('click', function(e){
+		e.stop();
+		
+		show( $(block_id) );
+		ctrller.style.display = 'none';
+	});
 }
 

@@ -122,7 +122,7 @@ class pgTableEditForm(forms.BaseForm):
             )
 
         f['comment'] = forms.CharField(required=False, 
-                widget = forms.Textarea
+                widget = forms.Textarea(attrs={'cols':0, 'rows':0})
             )
 
         self.base_fields = f

@@ -12,7 +12,7 @@ p {
 }
 </style>
 <div class='msg-placeholder'></div>
-<div class='row'>
+<div class='row container'>
 	<div class="span5 tbl-operatn">
 		<h5 class="heading">Edit Table</h5>
 		<p> Hit the edit table button if you want to perform one of the following
@@ -22,13 +22,15 @@ p {
 			<li>Change the schema which the table is on</li>
 			<li>Add or change the comment on the table</li>
 			<li>If an empty comment is sent, the comment on the table if it exists would be dropped</li>
+			<!-- more to come. I promise -->
 		{% elif dialect == 'mysql' %}
 			<li>Change the character set used in the table</li>
+			<!-- more to come. I promise -->
 		{% endif %}
 			</ul>
 		</p>
-		<input type="submit" class='btn submit-button' value="Edit Table"/>
-		<div class="" style="display:none;">
+		<input type="submit" id='tbl_edit_form_shower' class='btn submit-button shower' value="Edit Table"/>
+		<div id='tbl_edit_form' class="hidden_block" style="display:none;">
 		{% include 'tbl/tbl_ops_forms.html' with form=tbl_edit_form form_name='tbl_edit_form' %}</div>
 	</div>
 	{% if dialect == 'postgresql' %}
@@ -39,40 +41,61 @@ p {
     		<li>To update data statistics used by the PostgreSQL query planner.</li>
     		<li>To protect against loss of very old data due to transaction ID wraparound.</li>
 		</ul></p>
-		<input type="submit" class='btn submit-button' value="Vacuum Table"/>
-		<div class="values-needed" style="display:none">
-		{% include 'tbl/tbl_ops_forms.html' with form=tbl_vacuum_form form_name='tbl_vacuum_form' %}
-		</div>
+		<input type="submit" id="tbl_vacuum_form_shower" class='btn submit-button shower' value="Vacuum Table"/>
+		<div id="tbl_vacuum_form" class="hidden_block" style="display:none">
+		{% include 'tbl/tbl_ops_forms.html' with form=tbl_vacuum_form form_name='tbl_vacuum_form' %}</div>
 	</div>
 	<div class="span5 tbl-operatn">
 		<h5 class="heading">Analyze Table </h5>
 		<p><ul>
 			<li>ANALYZE collects statistics about the contents of tables in the database, and stores the results in a system catalog. </li>
 			<li>Subsequently, the query planner uses these statistics to help determine the most efficient execution plans for queries. </li>
-			</ul></p>
-		<input type="submit" class='btn submit-button' value="Analyze Table &rarr;"/>
-	</div>
-	<div class="span5 tbl-operatn">
-		<h5 class="heading">Reindex Table </h5>
+		</ul></p>
+		<form class="tt_form" action="" method="post">
+			{% csrf_token %}
+			<input type="hidden" value="analyze_table" name='form_type' />
+			<input type="submit" class='btn submit-button' value="Analyze Table &rarr;"/>
+		</form>
+
+		<h5 class="heading" style="margin-top:10px;">Reindex Table </h5>
 		<p><ul>
 		<li>REINDEX rebuilds an index using the data stored in the index's table, replacing the old copy of the index.</li> 
 		</ul></p>
-		<input type="submit" class='btn submit-button' value="Reindex Table &rarr;"/>
+		<form class="tt_form" action="" method="post">
+			{% csrf_token %}
+			<input type="hidden" value="reindex_table" name='form_type' />
+			<input type="submit" class='btn submit-button' value="Reindex Table &rarr;"/>
+		</form>
 	</div>
-	<div class="span5 tbl-operatn">
+<!-- 	<div class="span5 tbl-operatn">
 		<h5 class="heading">Dropping this table</h5>
 		<p>
 			If you want to drop this table, go to the overview view of this database and drop the table from there. When viewing tables there is a lock on them.
 		</p>
+	</div> -->
 	{% endif %}
-</div>
+</div><!-- .row -->
 
 <script type="text/javascript" ajaxKey="{{ajaxKey}}">
 window.addEvent('domready', function(){
 /// on clicking each of the buttons it should give a form
 /// if there is a form associated with it.
 /// else it should send a request indicating the function to be ran 
-	console.log('inline javascript');
+	$$('.shower').each(function(item){
+		var block_id = item.nextElementSibling.id;
+		show_block(item, block_id);
+	});
+	var hide_form = function(el) {
+		var block_id = el.getParent('.hidden_block').id;
+		hide(block_id);
+		show( block_id+ '_shower');
+	}
+	// .close-forms are not to send submit requests
+	// used for closing displayed forms: a ctrller
+	$$('.close-form').addEvents({
+			'click': function(e) { e.stop(); hide_form(e.target); },
+			'submit': function(e) { e.stop(); hide_form(e.target);}
+		})
 });
 </script>
 
