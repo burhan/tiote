@@ -248,12 +248,19 @@ function canUpdateSidebar(navObj, oldNavObj) {
 }
 
 Page.prototype.generateSidebar = function(clear_sidebar) {
-	// autosize the sidebar to the available height after below the #topbar
+	
 	var resize_sidebar = function() {
-		if ($('sidebar').getScrollSize().y > (getHeight() - 50) || 
-				$('sidebar').getSize().y < (getHeight() - 50)) {
-			$('sidebar').setStyle('height', getHeight() - 50);
-		}
+		// basic assumption here is that there is one ul and that one is a long one
+		// autosize the sidebar to the available height after below the #topbar
+		var sidebar_height = getHeight() - 50; // 50 for the div immediately under #topbar
+		$('sidebar').setStyle('height', sidebar_height);
+		// only the ul elements should be scrollable when it exceeds the size of the sidebar
+		var inner_ul = $E('#sidebar ul');
+		if (inner_ul == null) // there are times when sidebar has no ul in it
+ 			return;
+		// siblings_height is height of all the ul's siblings [selects, h5.placeholders e.t.c]
+		var siblings_height = $('sidebar').getScrollSize().y - inner_ul.getScrollSize().y
+		inner_ul.setStyle('height', getHeight() - 40 -  siblings_height);
 	};
 	
 	// decide if there should be a sidebar update
