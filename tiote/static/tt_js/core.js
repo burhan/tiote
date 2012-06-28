@@ -256,8 +256,11 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 		$('sidebar').setStyle('height', sidebar_height);
 		// only the ul elements should be scrollable when it exceeds the size of the sidebar
 		var inner_ul = $E('#sidebar ul');
-		if (inner_ul == null) // there are times when sidebar has no ul in it
+		ii = inner_ul;
+		// there are times when sidebar has no ul in it
+		if (inner_ul == null)
  			return;
+		
 		// siblings_height is height of all the ul's siblings [selects, h5.placeholders e.t.c]
 		var siblings_height = $('sidebar').getScrollSize().y - inner_ul.getScrollSize().y
 		inner_ul.setStyle('height', getHeight() - 40 -  siblings_height);
@@ -450,6 +453,55 @@ Page.prototype.jsifyTable = function(syncHeightWithWindow) {
 }
 
 
+function tbl_pagination(total_count, limit, curindex) {
+	curindex = parseInt(curindex);	// enables arithmetic meaning
+	var maxindex = 1 + Math.floor(total_count / limit); // maxindex must start from 1
+	var _o = page_hash();
+	
+	var p = '<p class="paginatn pull-right">';	// pagination elements container
+	var info_span = '<span style="padding-left:15px">[ {0} {1} ]</span>'.substitute([
+		total_count, total_count > 1 ? 'rows' : 'row'
+	]);
+	
+	if (maxindex == 1) // necessary condition to continue
+		return p + info_span + '</p>';
+
+	// generate select element
+	var selindex_elmt = '<select id="index-select" style="width:45px; padding:1px; height:22px;">'
+	for (var i = 1; i < (maxindex + 1); i++) {	// one more off the maxindex since counting starts from 1
+		selindex_elmt += '<option value="{i}" {sel}>{i}</option>'.substitute({
+			'i':i, 
+			sel: i == curindex ? 'selected="selected"' : ''
+		});
+	}
+	selindex_elmt += '</select>';
+	// generate pagination links
+	var els = [];
+	var anc_template = '<a class="pag_lnk cntrl" href="{href}">{text}</a>';
+
+	if (curindex != 1) {
+	// add a previous link
+		_o['pg'] = curindex - 1;
+		els.include(anc_template.substitute({
+			text: 'previous', href: '#' + Object.toQueryString(_o)
+		}));
+		if (curindex != maxindex)
+			els.include('<span class="seperator">|</span>'); // seperator
+	}
+	if (curindex != maxindex) {
+		// add a next link
+		_o['pg'] = curindex + 1;
+		els.include(anc_template.substitute({
+			text: 'next', href: '#' + Object.toQueryString(_o)
+		}));
+	}
+	// the select elmt
+	els.include(selindex_elmt);
+	// done
+	return p + els.join('') + info_span + '</p>';
+}
+
+
 Page.prototype.addTableOpts = function() {
 	// .table-options processing : row selection
 	if ($$('.table-options') == null || ! Object.keys(pg.tbls).length)
@@ -471,14 +523,21 @@ Page.prototype.addTableOpts = function() {
 		// table's needing pagination
 		if (Object.keys(htm_tbl.vars).contains('data')) {
 			var pg_htm = tbl_pagination( // pagination html
-				htm_tbl['vars']['data']['total_count'],
-				htm_tbl['vars']['data']['limit'], 
-				htm_tbl['vars']['data']['offset']
+				htm_tbl.vars.data['total_count'],
+				htm_tbl.vars.data['limit'], 
+				htm_tbl.vars.data['pg']
 			);
-			$(tbl_opt).getElement('p').adopt(pg_htm);
+			$(tbl_opt).getElement('p').innerHTML += pg_htm;
 		}
-
-
+		// add interactivity to the select element in the tables' pagination
+		$ES('select#index-select', tbl_opt).addEvent('change', function(e){
+			var nextpg = e.target.get('value'), _o = page_hash();
+			if ((Object.keys(_o).contains('pg') && _o[pg] != nextpg) || (nextpg != 1) ){
+				_o['pg'] = nextpg;
+				location.hash = '#' + Object.toQueryString(_o);
+			}
+			
+		});
 		// links that do something (edit, delete ...)
 		tbl_opt.getElements('a.doer').addEvent('click', function(e){
 			e.stop();

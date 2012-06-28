@@ -33,7 +33,7 @@ div.table-options a {
 }
 div.table-options a, div.table-options span, div.table-options p {
     font-size: 12px;
-    margin-bottom: 3px;
+/*    margin-bottom: 3px;*/
 }
 
 div.table-options a.needy_doer {
@@ -44,7 +44,7 @@ div.table-options a.needy_doer {
 div.table-options p span {
 	color: #888;
 }
-div.table-options .paginatn a.last {
+/*div.table-options .paginatn a.last {
     padding-right: 6px;
 }
 div.table-options .paginatn a.active {
@@ -55,6 +55,16 @@ div.table-options .paginatn a {
 }
 div.table-options .paginatn a.cntrl {
     color: #0069D6;
+}*/
+div.table-options .paginatn a.cntrl {
+	padding-right: 5px;
+}
+div.table-options .paginatn a.cntrl:last-of-type {
+	padding-right: 15px;
+}
+div.table-options .paginatn span.seperator {
+	padding: 0px; margin: 0px;
+	padding-right: 1px;
 }
 
 div.data-entry code{
@@ -372,7 +382,7 @@ input[type="text"], textarea, select {
     font-family: mono;
     font-size: 12px;
 	box-shadow: none;
-	padding: 2px;
+/*	padding: 2px;*/
 }
 
 input:focus, textarea:focus {

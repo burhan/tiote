@@ -165,58 +165,6 @@ function highlightActiveMenu(){
 	});
 }
 
-function tbl_pagination(total_count, limit, offset) {
-	var pag_max = Math.floor(total_count / limit);
-	var pag_lnks = new Elements();
-	var navObj = page_hash();
-	for (var i = 0; i < (pag_max + 1); i++) {
-		navObj['offset'] = String(i*limit);
-		var request_url = '#' + Object.toQueryString(navObj);
-		pag_lnks.include( new Element('a',{ 'href': request_url, 
-			'class':'pag_lnk', 'text':(i+1)
-			})
-		);
-	}
-	var ancs = new Elements();
-	var j = Math.floor(offset/limit);
-	if ( pag_max > 0 ) {
-		if (j == 0) {
-			ancs.append( [ pag_lnks[0].addClass('active'),
-				(pag_max > 2) ? pag_lnks[1] : pag_lnks[1].addClass('last'),
-				(pag_max > 2) ? pag_lnks[2].addClass('last') : null, 
-				pag_lnks[1].clone().set('text','Next').addClass('cntrl').removeClass('last'),
-				pag_lnks[pag_max].clone().set('text', 'Last').addClass('cntrl')
-				]);		
-		} 
-		else if (j == pag_max) {
-			ancs.append( [ pag_lnks[0].clone().set('text','First').addClass('cntrl'),
-				pag_lnks[j-1].clone().set('text','Prev').addClass('cntrl last'),
-				(pag_max > 2) ? pag_lnks[j-2] : null,
-				pag_lnks[j-1], pag_lnks[j].addClass('active') 
-				]);
-		} 
-		else {
-			ancs.append( [ pag_lnks[0].clone().set('text','First').addClass('cntrl').removeClass('last'),
-				pag_lnks[j-1].clone().set('text','Prev').addClass('cntrl last'),
-				pag_lnks[j-1], pag_lnks[j].addClass('active'), pag_lnks[j+1].addClass('last'),
-				pag_lnks[j+1].clone().set('text','Next').addClass('cntrl').removeClass('last'),
-				pag_lnks[pag_max].clone().set('text', 'Last').addClass('cntrl').removeClass('last')
-				] );
-		}
-	}
-	
-	return new Element('p', {'class':'paginatn pull-right'}).adopt(ancs,
-		// span to display no of pages available
-		new Element('span',{'style':'padding-left:20px;', 
-			'text': '[ {0} {1} | {2} {3} ]'.substitute( [ 
-					total_count, ((total_count > 1) ? 'entries' : 'entry'),
-					(pag_max+1), (pag_max > 0) ? 'pages' : 'page' ]
-				)
-		})
-	);
-}
-
-
 function disable_unimplemented_links(){
 	// the current menus that have been implemented
 	// this data structure is to be filled manually

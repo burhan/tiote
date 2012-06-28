@@ -24,6 +24,7 @@ _abbr = {
     'fkeys': 'foreign keys',
     'cons': 'constraints',
     'ops': 'operations',
+    'pg': 'page',
 }
 
 # returns page templates for each view

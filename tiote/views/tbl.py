@@ -25,7 +25,7 @@ def browse(request):
     # build table
     c = base.TableView(tbl_data=tbl_data,
         tbl_props = {'with_checkboxes': True, 'display_row': True, },
-        tbl_store = {'total_count':tbl_data['total_count'], 'offset': tbl_data['offset'],
+        tbl_store = {'total_count':tbl_data['total_count'], 'pg': tbl_data['pg'],
             'limit': tbl_data['limit'] },
         show_tbl_optns = True,
         tbl_optn_type='data',
@@ -256,29 +256,44 @@ def edit(request):
             return HttpResponse(json.dumps(ret))
 
 
+def get_ops_form(conn_params, get_data, data=None):
+    context = {}
+    if conn_params['dialect'] == 'postgresql':
+        # table edit form
+        schema_list = qry.common_query(conn_params, 'schema_list', get_data)['rows']
+        tblEditForm = forms.get_dialect_form('TableEditForm', conn_params['dialect'])
+        context['tbl_edit_form'] = tblEditForm( tbl_name = get_data.get('tbl'),
+                tbl_schema = get_data.get('schm'),
+                schemas = schema_list,
+                data = data
+            )
+        # table vacuum form
+        context['tbl_vacuum_form'] = forms.TableVacuumForm()
+
+    elif conn_params['dialect'] == 'mysql':
+        # table edit form
+        charset_list = qry.common_query(conn_params, 'charset_list', get_data)['rows']
+        tblEditForm = forms.get_dialect_form('TableEditForm', conn_params['dialect'])
+        context['tbl_edit_form'] = tblEditForm(tbl_name= get_data.get('tbl'),
+                charsets = charset_list, 
+                data = data
+            )
+
+    return context
+
+
 def ops(request):
     conn_params = fns.get_conn_params(request, update_db=True)
     extra_context = SortedDict({'dialect': conn_params['dialect']})
+    if request.method == 'POST':
+        form_contxt = get_ops_form(conn_params, request.GET, data=request.POST)
+        if request.POST.get('form_type') == 'tbl_edit_form':
+            raise Exception(form_contxt)
+        assert False
+    else:
+        form_contxt = get_ops_form(conn_params, request.GET)
 
-    if conn_params['dialect'] == 'postgresql':
-        # table edit form
-        schema_list = qry.common_query(conn_params, 'schema_list', request.GET)['rows']
-        tblEditForm = forms.get_dialect_form('TableEditForm', conn_params['dialect'])
-        extra_context['tbl_edit_form'] = tblEditForm( tbl_name = request.GET.get('tbl'),
-                tbl_schema = request.GET.get('schm'),
-                schemas = schema_list,
-            )
-        # table vacuum form
-        extra_context['tbl_vacuum_form'] = forms.TableVacuumForm()
-
-    if conn_params['dialect'] == 'mysql':
-        # table edit form
-        charset_list = qry.common_query(conn_params, 'charset_list', request.GET)['rows']
-        tblEditForm = forms.get_dialect_form('TableEditForm', conn_params['dialect'])
-        extra_context['tbl_edit_form'] = tblEditForm(tbl_name= request.GET.get('tbl'),
-                charsets = charset_list
-            )
-
+    extra_context.update(form_contxt)
 
     retrn = fns.render_template(request, 'tbl/tt_ops.html', extra_context, is_file=True )
     return HttpResponse(retrn)
@@ -303,3 +318,4 @@ def route(request):
         return ops(request)
     else:
         return fns.http_500('malformed URL of section "table"')
+

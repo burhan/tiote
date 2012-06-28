@@ -130,8 +130,10 @@ def rpr_query(conn_params, query_type, get_data={}, post_data={}):
 def browse_table(conn_params, get_data={}, post_data={}):
     # initializations
     sub_q_data = {'tbl': get_data.get('tbl'),'db':get_data.get('db')}
-    sub_q_data['offset'] = get_data.get('offset') if get_data.has_key('offset') else 0
-    sub_q_data['limit'] = get_data.get('limit') if get_data.has_key('limit') else getattr(settings, 'TT_MAX_ROW_COUNT', 100)
+    pg_index = get_data.get('pg', 1) # page 1 is the starting point
+    sub_q_data['limit'] = getattr(settings, 'TT_MAX_ROW_COUNT', 30) # 30 is the default row limit
+    # page 1 starts with offset 0 and so on
+    sub_q_data['offset'] = int(sub_q_data['limit']) * ( int(pg_index) - 1)
     for item in ('schm', 'sort_key', 'sort_dir',):
         if get_data.has_key(item): sub_q_data[item] = get_data.get(item)
     # retrieve and run queries
@@ -145,8 +147,12 @@ def browse_table(conn_params, get_data={}, post_data={}):
         )
     # format and return data
     if type(r) == dict:
-        r.update({'total_count': count[0][0], 'offset': sub_q_data['offset'],
-            'limit':sub_q_data['limit'], 'keys': keys})
+        r.update({
+            'total_count': count[0][0],
+            'pg': pg_index,
+            'limit':sub_q_data['limit'],
+            'keys': keys
+        })
         return r
     else:
         return fns.http_500(r)

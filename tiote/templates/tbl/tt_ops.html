@@ -93,9 +93,10 @@ window.addEvent('domready', function(){
 	// .close-forms are not to send submit requests
 	// used for closing displayed forms: a ctrller
 	$$('.close-form').addEvents({
-			'click': function(e) { e.stop(); hide_form(e.target); },
-			'submit': function(e) { e.stop(); hide_form(e.target);}
-		})
+		'click': function(e) { e.stop(); hide_form(e.target); },
+		'submit': function(e) { e.stop(); hide_form(e.target); }
+	});
+	//
 });
 </script>
 
