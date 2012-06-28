@@ -509,18 +509,9 @@ Page.prototype.addTableOpts = function() {
 	
 	$$('.table-options').each(function(tbl_opt, opt_in){
 		var htm_tbl = pg.tbls[opt_in]; // short and understandable alias
-		// enable selection of rows
-		$(tbl_opt).getElements('a.selector').addEvent('click', function(e) {	
-			// loop through all the classes to find the "select_" class
-			e.target.get('class').split(' ').each(function(cl){
-				if (cl.contains('select_')) {
-					var option = cl.replace('select_', '').toLowerCase();
-					set_all_tr_state(htm_tbl, (option == 'all') ? true : false);
-				}
-			});
-		});
 
 		// table's needing pagination
+		// this sequence is placed first so as not invalidate event handlers placed on some html elements
 		if (Object.keys(htm_tbl.vars).contains('data')) {
 			var pg_htm = tbl_pagination( // pagination html
 				htm_tbl.vars.data['total_count'],
@@ -538,7 +529,19 @@ Page.prototype.addTableOpts = function() {
 			}
 			
 		});
-		// links that do something (edit, delete ...)
+
+		// enable selection of rows
+		$(tbl_opt).getElements('a.selector').addEvent('click', function(e) {	
+			// loop through all the classes to find the "select_" class
+			e.target.get('class').split(' ').each(function(cl){
+				if (cl.contains('select_')) {
+					var option = cl.replace('select_', '').toLowerCase();
+					set_all_tr_state(htm_tbl, (option == 'all') ? true : false);
+				}
+			});
+		});
+
+	// links that do something (edit, delete ...)
 		tbl_opt.getElements('a.doer').addEvent('click', function(e){
 			e.stop();
 			if (e.target.hasClass('action_refresh'))
