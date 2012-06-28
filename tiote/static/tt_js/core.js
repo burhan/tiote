@@ -592,7 +592,7 @@ function edit_view(where_stmt) {
 
 
 function do_action_wrapper(tbl, e) {
-	if (!tbl.getSelected())// necessary condition to begin
+	if (! tbl.getSelected().length )// necessary condition to begin
 		return;
 
 	// control decider
