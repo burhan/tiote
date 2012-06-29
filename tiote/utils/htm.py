@@ -189,18 +189,21 @@ class HtmlTable():
             **kwargs):
         self.props = props
         self.tbody_chldrn = []
-        # build attributes
-        _attribs = {'class':'sql zebra-striped', 'id':'sql_table'}
-        _attribs.update(attribs)
-        if props.has_key('props_table') and props['props_table'] == True:
-            _attribs['class'] += ' props-table'
-        self.attribs_list = self._build_attribs_list(_attribs)
         self.store_list = self._build_store_list(store)
         # store the keys in the table's markup
         self.keys_list = []
         if self.props.has_key('keys'):
             self.keys_list = self._build_keys_list(self.props['keys'])
             self.keys_column = [x[0] for x in self.props['keys']] # index 0 corresponds to column name
+        
+        # build attributes
+        _attribs = {'class':'sql zebra-striped', 'id':'sql_table'}
+        if hasattr(self, 'keys_column') and not len(self.keys_column):
+            _attribs['class'] += ' no-primary-key'
+        _attribs.update(attribs)
+        if props.has_key('props_table') and props['props_table'] == True:
+            _attribs['class'] += ' props-table'
+        self.attribs_list = self._build_attribs_list(_attribs)
         # build <thead><tr> children
         self.columns_desc = columns_desc
         if columns is not None:
@@ -276,11 +279,11 @@ class HtmlTable():
                 )
             if self.props.keys().count('display_row') > 0 and self.props['display_row'] == True:
                 l_props.append(
-                    '<a class="go_link display_row pointer"><img src="{0}/tt_img/goto.png" /></a>'.format(static_addr)
+                    u'<a class="go_link display_row pointer"><img src="{0}/tt_img/goto.png" /></a>'.format(static_addr)
                 )
-        tida = '<td class="controls"{1}><div class="data-entry">{0}</div></td>'.format(
-            "".join(l_props),
-            ' style="min-width:' + str(len(l_props) * 18) + 'px"' if len(l_props) else '25px"'
+        tida = u'<td class="controls"{1}><div class="data-entry">{0}</div></td>'.format(
+                u"".join(l_props),
+                u' style="min-width:' + str(len(l_props) * 18) + 'px"' if len(l_props) else '25px"'
             )
         row_list.append(tida)
 
@@ -289,6 +292,8 @@ class HtmlTable():
             row_i = unicode(row[i])
             # if this table has property props_table set to True skip truncation of very long row items
             if self.props.has_key('props_table') and self.props['props_table']:
+                column_data = row_i
+            elif hasattr(self, 'keys_column') and len(self.keys_column) == 0:
                 column_data = row_i
             elif len(row_i) > 40 and hasattr(self, 'keys_column') and not self.keys_column.count(self.columns[i]):
                 # trims the content until its off lenght 40 and adds a continuation placeholder
@@ -303,8 +308,8 @@ class HtmlTable():
             row_list.append(u'<td><div class="data-entry"><code>{0}</code></div></td>'.format(str(column_data)))
 
         # empty td
-        row_list.append('<td class="last-td"></td>')
-        row_list.append("</tr>")
+        row_list.append(u'<td class="last-td"></td>')
+        row_list.append(u"</tr>")
         self.tbody_chldrn.append(row_list)
     
     def to_element(self):

@@ -306,6 +306,11 @@ table.sql td div.data-entry {
     min-width: 150px;
 }
 
+table.no-primary-key td div.data-entry {
+	max-width: none;
+	max-height: none;
+}
+
 table.sql.props-table td div.data-entry {
 	min-width: 90px;
 }
