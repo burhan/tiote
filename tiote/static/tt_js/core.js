@@ -261,9 +261,10 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 		if (inner_ul == null)
  			return;
 		
+		inner_ul.setStyle('height', null); // resets the height to broswer computed values
 		// siblings_height is height of all the ul's siblings [selects, h5.placeholders e.t.c]
-		var siblings_height = $('sidebar').getScrollSize().y - inner_ul.getScrollSize().y
-		inner_ul.setStyle('height', getHeight() - 40 -  siblings_height);
+		var siblings_height = $('sidebar').getScrollSize().y - inner_ul.getSize().y
+		inner_ul.setStyle('height', getWindowHeight() - 40 -  siblings_height);
 	};
 	
 	// decide if there should be a sidebar update
@@ -316,7 +317,7 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 				// removes the keys [sort_key and sort_dir]
 				// they introduce errors in browse view. sorting by columns that don't exist
 				// - when the navigation is changed to another table
-				['sort_key', 'sort_dir'].each(function(_it){ // unwanted keys: manually update
+				['sort_key', 'sort_dir', 'pg', 'offset'].each(function(_it){ // unwanted keys: manually update
 					if (Object.keys(context).contains(_it))
 						delete context[_it];
 				});
