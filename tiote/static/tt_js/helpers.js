@@ -172,7 +172,7 @@ function disable_unimplemented_links(){
 	var implemented = {
 		'hm': ['home', 'query', 'databases'],
 		'db': ['overview', 'query'],
-		'tbl': ['browse', 'structure', 'insert', 'query', 'operations']
+		'tbl': ['browse', 'structure', 'insert', 'query',]
 	}
 	var section = page_hash()['sctn']
 	$$('.nav a').each(function(nav_link){
