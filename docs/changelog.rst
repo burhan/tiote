@@ -3,6 +3,12 @@
 Changelog
 =========
 
+0.2.4 : *July 22, 2012*
+-----------------------
+column creation.
+better postgresql constraints' view
+bug fixes
+
 0.2.3 : *May 27, 2012*
 ----------------------
 Viewing, droping and reseting sequences. All under database overview

@@ -5,8 +5,8 @@ from setuptools import setup, find_packages
 
 setup(
 	name = 'tiote',
-	version = '0.2.1',
-	description = 'Django database administrator',
+	version = '0.2.4',
+	description = 'Database administrator written in Python',
 	author = 'dumb906',
 	author_email = 'dumb906@gmail.com',
 	url = "https://github.com/dumb906/tiote",
@@ -27,6 +27,6 @@ setup(
 		"Topic :: Database :: Front-Ends",
 	], 
 	long_description = """\
-Tiote enables django websites to administer PostgreSQL and MySQL databases.
+Tiote is used to administer PostgreSQL and MySQL databases.
 """
 )
