@@ -44,18 +44,7 @@ div.table-options a.needy_doer {
 div.table-options p span {
 	color: #888;
 }
-/*div.table-options .paginatn a.last {
-    padding-right: 6px;
-}
-div.table-options .paginatn a.active {
-    font-weight: bold;
-}
-div.table-options .paginatn a {
-    color: #404040;
-}
-div.table-options .paginatn a.cntrl {
-    color: #0069D6;
-}*/
+
 div.table-options .paginatn a.cntrl {
 	padding-right: 5px;
 }
@@ -145,6 +134,25 @@ div.white-bg, p.white-bg {
 .topbar .nav li.active a {
 	font-weight: bold;
 }
+
+.msg-placeholder p.query-msg {
+	 border: 1px solid #DDEEDD;
+	 color: #808080;
+	 padding: 5px;
+}
+
+.msg-placeholder p.query-msg.success {
+	 background-color: #F7F7F7;
+}
+
+.msg-placeholder p.query-msg.warning {
+	 background-color: #FEFEE1;
+}
+
+.msg-placeholder p.query-msg.error {
+	 background-color: #FFF4F4;
+} 
+
 /*
 	SIDEBAR
 */

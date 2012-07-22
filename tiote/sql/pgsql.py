@@ -342,6 +342,14 @@ def generate_query(query_type, query_data=None):
         q0 = stmt.format(**query_data)
         return (q0, )
 
+    elif query_type in ('reindex_table', 'analyze_table'):
+        sql_stmt = '{command} {obj}'
+        sql_stmt = sql_stmt.format(
+            command = 'REINDEX TABLE' if query_type == 'reindex_table' else 'ANALYZE',
+            obj = query_data.get('tbl')
+        )
+        return (sql_stmt, )
+
 
 def col_defn(col_data, i):
     '''

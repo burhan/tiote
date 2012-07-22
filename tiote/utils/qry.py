@@ -474,3 +474,38 @@ def get_constraints(conn_params, query_type, get_data={}, form_data={}):
     return {'columns': columns, 'rows': rows, 'count': len(con_desc['rows'])}
 
 
+def get_table_names(): pass
+
+
+def run_tbl_operations(conn_params, form_type, get_data={}, post_data={}):
+    # generate / derive queries to be run
+    queries, msg = [], ''
+    if form_type == 'tbl_edit_form':
+        queries, msg = sql.alter_table(conn_params['dialect'], get_data, post_data)
+    elif form_type == 'tbl_vacuum_form':
+        queries = sql.pg_vacuum_stmt(get_data, post_data)
+    else:
+        # implemented queries: analyze table and reindex table
+        # only the pg dialect
+        queries = sql.generate_query(form_type, conn_params['dialect'], get_data)
+
+    # execute queries and return formatted status messages
+    if form_type == 'tbl_edit_form':
+        ret = sa.short_query(conn_params, queries)
+    else: ret = sa.execute_outside_transaction(conn_params, queries)
+
+    if ret['status'] == 'success':
+        if form_type == 'tbl_edit_form': ret['msg'] = msg + ' change succesfull'
+        else:
+            msg = '{command} operation ran succesfully'
+            if form_type == 'tbl_vacuum_form': com = 'VACUUM'
+            elif form_type == 'analyze_table': com = 'ANALYZE'
+            elif form_type == 'reindex_table': com = 'REINDEX'
+            ret['msg'] = msg.format(command=com)
+
+    ret['msg'] = '<p class="query-msg {status}">{msg}</p>'.format(
+            status = 'error' if ret['status'] == 'error' else 'success',
+            msg = ret['msg']
+        )
+    return ret
+

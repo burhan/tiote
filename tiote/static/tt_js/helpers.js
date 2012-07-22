@@ -65,12 +65,13 @@ function make_checkable(data_table) {
 			if (data_table.isSelected(last_selected_tr)) {
 				data_table.selectRange(last_selected_tr, selected_tr);
 				checker_status = true;
-			}else if (data_table.isSelected(selected_tr)) {
+			}
+			else if (data_table.isSelected(selected_tr)) {
 				data_table.deselectRange(last_selected_tr, selected_tr);
 				checker_status = false;
 			}
 			// (un)check the checkboxes
-			var start_i;var end_i;
+			var start_i; var end_i;
 			var sel_tr_index = parseInt(id.split('_')[1])
 			var last_sel_tr_index = parseInt(last_selected_tr.id.split('_')[1])
 			if (sel_tr_index > last_sel_tr_index) {
@@ -233,9 +234,8 @@ function tweenBgToWhite(el) {
 }
 
 
-function show_block(ctrller, block_id, type) {
-	// shower must be a clickable: button or input:submit
-	type = type || false;
+function show_block(ctrller, block_id) {
+	// ctrller must be a clickable: button or input:submit
 	
 	ctrller.addEvent('click', function(e){
 		e.stop();

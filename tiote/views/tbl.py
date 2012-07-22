@@ -202,6 +202,7 @@ def edit(request):
             if request.GET.get(key): d[key] = request.GET.get(key)
         h.set_cookie('TT_NEXT', str( urlencode(d) )  )
         return h
+        
     # inits and queries
     conn_params = fns.get_conn_params(request, update_db=True)
     tbl_struct_data = qry.rpr_query(conn_params, 'raw_table_structure', fns.qd(request.GET))
@@ -268,7 +269,7 @@ def get_ops_form(conn_params, get_data, data=None):
                 data = data
             )
         # table vacuum form
-        context['tbl_vacuum_form'] = forms.TableVacuumForm()
+        context['tbl_vacuum_form'] = forms.TableVacuumForm(data=data)
 
     elif conn_params['dialect'] == 'mysql':
         # table edit form
@@ -279,6 +280,9 @@ def get_ops_form(conn_params, get_data, data=None):
                 data = data
             )
 
+    # run validation if data is passed for the forms
+    if data is not None:
+        for f in context.values(): f.is_valid()
     return context
 
 
@@ -287,9 +291,15 @@ def ops(request):
     extra_context = SortedDict({'dialect': conn_params['dialect']})
     if request.method == 'POST':
         form_contxt = get_ops_form(conn_params, request.GET, data=request.POST)
-        if request.POST.get('form_type') == 'tbl_edit_form':
-            raise Exception(form_contxt)
-        assert False
+        if request.POST.get('form_type'):
+            if request.POST.get('form_type') in ('tbl_vacuum_form', 'tbl_edit_form'):
+                form_data = form_contxt[request.POST.get('form_type')].cleaned_data
+            else:
+                form_data = {} # the other operations don't submit forms
+            msg = qry.run_tbl_operations(conn_params, request.POST.get('form_type'), request.GET, form_data)
+            return HttpResponse(json.dumps(msg))
+        else:
+            pass
     else:
         form_contxt = get_ops_form(conn_params, request.GET)
 

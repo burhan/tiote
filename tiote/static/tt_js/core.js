@@ -256,7 +256,6 @@ Page.prototype.generateSidebar = function(clear_sidebar) {
 		$('sidebar').setStyle('height', sidebar_height);
 		// only the ul elements should be scrollable when it exceeds the size of the sidebar
 		var inner_ul = $E('#sidebar ul');
-		ii = inner_ul;
 		// there are times when sidebar has no ul in it
 		if (inner_ul == null)
  			return;

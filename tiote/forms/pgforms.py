@@ -111,6 +111,7 @@ class pgTableEditForm(forms.BaseForm):
                 initial = tbl_name,
             )
 
+        # roles and users is not yet implemented in tiote
         # f['owner'] = forms.ChoiceField(
         #         choices = fns.make_choices(users, begin_empty=True),
         #         initial = tbl_owner
@@ -121,9 +122,10 @@ class pgTableEditForm(forms.BaseForm):
                 initial = tbl_schema
             )
 
-        f['comment'] = forms.CharField(required=False, 
-                widget = forms.Textarea(attrs={'cols':0, 'rows':0})
-            )
+        # comment is not yet in use in tiote
+        # f['comment'] = forms.CharField(required=False, 
+        #         widget = forms.Textarea(attrs={'cols':0, 'rows':0})
+        #     )
 
         self.base_fields = f
         super(pgTableEditForm, self).__init__(**kwargs)

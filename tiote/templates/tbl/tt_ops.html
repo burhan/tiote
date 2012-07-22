@@ -11,7 +11,7 @@ p {
 	font-size: 12px;
 }
 </style>
-<div class='msg-placeholder'></div>
+<div class='msg-placeholder' style='max-width:880px'></div>
 <div class='row container'>
 	<div class="span5 tbl-operatn">
 		<h5 class="heading">Edit Table</h5>
@@ -20,8 +20,8 @@ p {
 			<li> Rename the table</li>
 		{% if dialect == 'postgresql' %}
 			<li>Change the schema which the table is on</li>
-			<li>Add or change the comment on the table</li>
-			<li>If an empty comment is sent, the comment on the table if it exists would be dropped</li>
+			<!-- <li>Add or change the comment on the table</li> -->
+			<!-- <li>If an empty comment is sent, the comment on the table if it exists would be dropped</li> -->
 			<!-- more to come. I promise -->
 		{% elif dialect == 'mysql' %}
 			<li>Change the character set used in the table</li>

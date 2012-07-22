@@ -54,16 +54,14 @@ def select_input(rows, desc=None, initial=None):
         _l_attrib_str.extend([" ", k, "='", desc[k], "'"])
     attrib_str = "".join(_l_attrib_str)
     # build select's options
-    options_str = ''
+    options_str = []
     for row in rows:
-        prefx = '' 
+        opt_template, prefx = "<option value='{0}'{1}>{0}</option>", ''
         if initial is not None and initial == row[0]:
             prefx = " selected='selected'"
-        options_str += "<option value='{0}'{1}>{0}</option>".format(
-                row[0], prefx
-            )
+        options_str.append( opt_template.format(row[0], prefx ))
     # final select string
-    return "<select{0}>{1}</select>".format(attrib_str, options_str)
+    return "<select{0}>{1}</select>".format(attrib_str, ''.join(options_str))
 
 
 def generate_sidebar(request):
@@ -76,7 +74,7 @@ def generate_sidebar(request):
     # if sctn is overview give list of schema if postgresql or leave as above
     # if sctn is not 'home' or 'oveview' give a list of all the objects described by sctn
     if request.GET.get('sctn') == 'hm' or \
-    (conn_params['dialect'] == 'mysql' and request.GET.get('sctn') == 'db'):
+            (conn_params['dialect'] == 'mysql' and request.GET.get('sctn') == 'db'):
         li_list = []
         for db_row in db_list:
             sufx = "&schm=%s" % sa.get_default_schema(conn_params) if conn_params['dialect'] == 'postgresql' else ''
@@ -263,27 +261,27 @@ class HtmlTable():
     def push(self, row, static_addr="", props=None):
         count = len(self.tbody_chldrn)
         row_list = ["<tr id='row_{0}'>".format(str(count))]
-        l_props = []
+        l_cntrls = []
         if self.props is not None and self.props.has_key('keys') \
                 and len(self.props['keys']) > 0 :
             # els a.checkers would be added for all tables with self.props['keys'] set
-            l_props.append("<input class='checker' id='check_{0}' type='checkbox' />".format(count))
+            l_cntrls.append("<input class='checker' id='check_{0}' type='checkbox' />".format(count))
             # go_link adds anchors in every row 
             # go_link_type determines the characteristics of the anchor: href || onclick
             if self.props.has_key('go_link') > 0 and self.props['go_link'] == True:
-                l_props.append( 
+                l_cntrls.append( 
                     '<a href="{0}" class="go_link">{1}</a>'.format(
                         self.props['go_link_dest'] % row[0],
                         '<img src="{0}/tt_img/goto.png" />'.format(static_addr)
                     )
                 )
             if self.props.keys().count('display_row') > 0 and self.props['display_row'] == True:
-                l_props.append(
+                l_cntrls.append(
                     u'<a class="go_link display_row pointer"><img src="{0}/tt_img/goto.png" /></a>'.format(static_addr)
                 )
         tida = u'<td class="controls"{1}><div class="data-entry">{0}</div></td>'.format(
-                u"".join(l_props),
-                u' style="min-width:' + str(len(l_props) * 18) + 'px"' if len(l_props) else '25px"'
+                u"".join(l_cntrls),
+                u' style="min-width:%d%s' % (len(l_cntrls) * 18, 'px"') if len(l_cntrls) else ''
             )
         row_list.append(tida)
 
@@ -291,9 +289,9 @@ class HtmlTable():
         for i in _it:
             row_i = unicode(row[i])
             # if this table has property props_table set to True skip truncation of very long row items
-            if self.props.has_key('props_table') and self.props['props_table']:
-                column_data = row_i
-            elif hasattr(self, 'keys_column') and len(self.keys_column) == 0:
+            if (self.props.has_key('props_table') and self.props['props_table']) \
+                or \
+            (hasattr(self, 'keys_column') and len(self.keys_column) == 0):
                 column_data = row_i
             elif len(row_i) > 40 and hasattr(self, 'keys_column') and not self.keys_column.count(self.columns[i]):
                 # trims the content until its off lenght 40 and adds a continuation placeholder
@@ -307,9 +305,8 @@ class HtmlTable():
             column_data = column_data.replace(' ', '&nbsp;') # tds with spaces in them have its width set to its min-width
             row_list.append(u'<td><div class="data-entry"><code>{0}</code></div></td>'.format(str(column_data)))
 
-        # empty td
-        row_list.append(u'<td class="last-td"></td>')
-        row_list.append(u"</tr>")
+        row_list.append(u'<td class="last-td"></td>')   # empty td
+        row_list.append(u"</tr>")   # close tr tag
         self.tbody_chldrn.append(row_list)
     
     def to_element(self):

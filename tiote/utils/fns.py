@@ -77,7 +77,7 @@ def make_choices(choices, begin_empty=False, begin_value='', append_label=''):
 
 def site_proc(request):
     # abbreviations is splitted into arrays so that they can support 
-    # - searching both by keys and values
+    # - searching both by keys and abbrevs_values
     return {
         'ajaxKey': request.session.get('ajaxKey',''),
         'abbrevs_keys': _abbr.keys(),

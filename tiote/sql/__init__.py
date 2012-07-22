@@ -136,3 +136,49 @@ def get_column_sql(dialect, get_data={}, form_data={}):
             first_query += ' AFTER ' + form_data['insert_position'].split(' ')[1].strip()
 
     return (first_query, )
+
+
+def alter_table(dialect, get_data={}, form_data={}):
+    if not len(get_data) and not len(form_data):
+        raise Exception('get_data and form_data cannot be empty')
+
+    queries, msg = [], ''
+    # change table name if it differs in the form_data
+    if get_data.get('tbl') != form_data.get('name'):
+        queries.append('ALTER TABLE {old_name} RENAME TO {new_name}'.format(
+                old_name = get_data.get('tbl'),
+                new_name = form_data.get('name')
+            ))
+    msg += 'table name'
+
+    if dialect == 'mysql':
+        return queries
+
+    # postgresql only now
+    # change schema if it differs in the form data
+    if get_data.get('schm') != form_data.get('schema'):
+        # change table name if it differs in the form_data:
+        # cases where there is a name change as well
+        if get_data.get('tbl') != form_data.get('name'):
+            tbl_name = form_data.get('name')
+        else: tbl_name = get_data.get('name')
+
+        queries.append('ALTER TABLE {tbl_name} SET SCHEMA {new_schema}'.format(
+                tbl_name = tbl_name,
+                new_schema = form_data.get('schema')
+            ))
+        msg += ' and schema'
+    return queries, msg
+
+
+def pg_vacuum_stmt(get_data={}, form_data={}):
+    sql_stmt = 'VACUUM {options} {table_name}'
+    options_stmt = ''
+    for k in form_data.keys():
+        if form_data.get(k): options_stmt += ' ' + k.upper()
+    sql_stmt = sql_stmt.format(
+        table_name = get_data.get('tbl'),
+        options = options_stmt
+    )
+    return (sql_stmt, )
+
