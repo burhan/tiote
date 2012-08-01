@@ -1,6 +1,7 @@
 import json
 from django.http import HttpResponse
 from django.conf import settings
+from django.utils.html import escape
 
 from tiote import sql, sa
 import fns
@@ -210,7 +211,7 @@ def get_row(conn_params, get_data={}, post_data={}):
     if type(r) == str: return r
     for ind in range(len(r['columns'])):
         html += u'<span class="column-entry">' + unicode(r['columns'][ind]) + u'</span>'
-        html += u'<br /><div class="data-entry"><code>' + unicode(r['rows'][0][ind]) + u'</code></div>'
+        html += u'<br /><div class="data-entry"><code>' + escape(unicode(r['rows'][0][ind])) + u'</code></div>'
     # replace all newlines with <br /> because html doesn't render newlines (\n) directly
     html = html.replace(u'\n', u'<br />')
     return html

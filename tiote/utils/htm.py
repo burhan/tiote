@@ -3,6 +3,7 @@ from django.template import loader, RequestContext, Template
 
 import qry, fns
 from tiote import sa
+from django.utils.html import escape
 
 
 def table_options(opt_type, with_keys=True, ):
@@ -287,7 +288,7 @@ class HtmlTable():
 
         _it = self.assoc_order if getattr(self, 'assoc_order', False) else range(len(row)) #
         for i in _it:
-            row_i = unicode(row[i])
+            row_i = escape(unicode(row[i]) )
             # if this table has property props_table set to True skip truncation of very long row items
             if (self.props.has_key('props_table') and self.props['props_table']) \
                 or \
